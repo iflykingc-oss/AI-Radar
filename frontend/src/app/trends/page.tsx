@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TrendingUp, TrendingDown, Minus, Star, Github, ExternalLink, MessageSquare, ArrowUpRight } from 'lucide-react';
 import { FadeIn } from '@/components/transitions/FadeIn';
 import { TrendsSkeleton } from '@/components/skeletons/TrendsSkeleton';
 import { Database } from '@/lib/supabase/types';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 
 type WordTag = { name: string; count: number };
 
@@ -19,6 +21,116 @@ interface TrendProduct {
   trendScore: number;
   weeklyChange: number;
   monthlyViews: number;
+}
+
+interface ChartDataPoint {
+  label: string;
+  value: number;
+}
+
+/** Simple SVG line chart showing values over time. */
+function SimpleLineChart({ data, width = 600, height = 200 }: { data: ChartDataPoint[]; width?: number; height?: number }) {
+  const maxVal = Math.max(...data.map(d => d.value), 1);
+  const points = data.map((d, i) => ({
+    x: (i / Math.max(data.length - 1, 1)) * (width - 60) + 40,
+    y: height - 30 - (d.value / maxVal) * (height - 60),
+  }));
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
+      {/* Y-axis labels */}
+      {[0, 0.5, 1].map((ratio, i) => {
+        const y = height - 30 - ratio * (height - 60);
+        const val = Math.round(ratio * maxVal);
+        return (
+          <text key={i} x={36} y={y + 4} textAnchor="end" className="text-[10px] fill-muted-foreground">{val}</text>
+        );
+      })}
+      <path d={pathD} fill="none" stroke="hsl(var(--primary))" strokeWidth="2" />
+      {points.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="3" fill="hsl(var(--primary))" />)}
+      {data.filter((_, i) => i % Math.max(Math.ceil(data.length / 8), 1) === 0).map((d, i) => {
+        const idx = data.indexOf(d);
+        return <text key={i} x={points[idx].x} y={height - 8} textAnchor="middle" className="text-[10px] fill-muted-foreground">{d.label}</text>;
+      })}
+    </svg>
+  );
+}
+
+/** Simple SVG bar chart comparing categories. */
+function SimpleBarChart({ data, width = 600, height = 200 }: { data: ChartDataPoint[]; width?: number; height?: number }) {
+  const maxVal = Math.max(...data.map(d => d.value), 1);
+  const barWidth = Math.min((width - 60) / data.length - 8, 50);
+  const colors = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--destructive))', 'hsl(220, 80%, 50%)', 'hsl(280, 60%, 50%)', 'hsl(160, 60%, 45%)', 'hsl(30, 80%, 55%)'];
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
+      {data.map((d, i) => {
+        const barHeight = (d.value / maxVal) * (height - 60);
+        const x = i * (barWidth + 8) + 40;
+        const y = height - 30 - barHeight;
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={barWidth} height={barHeight} rx="3" fill={colors[i % colors.length]} opacity="0.85" />
+            <text x={x + barWidth / 2} y={height - 14} textAnchor="middle" className="text-[10px] fill-muted-foreground">{d.label.slice(0, 10)}</text>
+            <text x={x + barWidth / 2} y={y - 4} textAnchor="middle" className="text-[10px] fill-foreground font-medium">{d.value}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/** Generate mock line chart data based on time range. */
+function generateLineChartData(timeRange: string): ChartDataPoint[] {
+  const now = new Date();
+  let days: number;
+  let formatLabel: (d: Date) => string;
+
+  if (timeRange === '24h') {
+    days = 1;
+    formatLabel = (d) => d.getHours().toString() + ':00';
+  } else if (timeRange === '7d') {
+    days = 7;
+    formatLabel = (d) => (d.getMonth() + 1) + '/' + d.getDate();
+  } else if (timeRange === '30d') {
+    days = 30;
+    formatLabel = (d) => (d.getMonth() + 1) + '/' + d.getDate();
+  } else if (timeRange === '90d') {
+    days = 90;
+    formatLabel = (d) => (d.getMonth() + 1) + '/' + d.getDate();
+  } else {
+    days = 7;
+    formatLabel = (d) => (d.getMonth() + 1) + '/' + d.getDate();
+  }
+
+  const data: ChartDataPoint[] = [];
+  let seed = 42;
+  const seededRandom = () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
+
+  for (let i = days; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const base = timeRange === '24h' ? 5 : timeRange === '7d' ? 12 : timeRange === '30d' ? 8 : 10;
+    const value = Math.round(base + seededRandom() * base * 0.8);
+    data.push({ label: formatLabel(d), value });
+  }
+  return data;
+}
+
+/** Generate mock bar chart data for top categories. */
+function generateBarChartData(): ChartDataPoint[] {
+  return [
+    { label: 'AI 写作', value: 45 },
+    { label: '代码助手', value: 38 },
+    { label: '图像生成', value: 52 },
+    { label: '视频编辑', value: 31 },
+    { label: '语音合成', value: 27 },
+    { label: '数据分析', value: 22 },
+    { label: '翻译工具', value: 18 },
+    { label: '教育学习', value: 15 },
+  ];
 }
 
 /**
@@ -155,7 +267,7 @@ export default function TrendsPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">{t('title')}</h1>
           <div className="flex items-center gap-2">
-            {['24h', '7d', '30d'].map((r) => (
+            {['24h', '7d', '30d', '90d'].map((r) => (
               <Badge
                 key={r}
                 variant={timeRange === r ? 'default' : 'outline'}
@@ -167,6 +279,16 @@ export default function TrendsPage() {
             ))}
           </div>
         </div>
+
+        {/* Trend Overview Line Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('trend_overview') || 'Trend Overview'}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SimpleLineChart data={generateLineChartData(timeRange)} />
+          </CardContent>
+        </Card>
 
         {/* Word Cloud */}
         <Card>
@@ -203,6 +325,16 @@ export default function TrendsPage() {
                 </svg>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Category Comparison Bar Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('category_comparison') || 'Category Comparison'}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SimpleBarChart data={generateBarChartData()} />
           </CardContent>
         </Card>
 
