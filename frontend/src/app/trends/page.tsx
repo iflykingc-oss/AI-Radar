@@ -86,15 +86,24 @@ function SimpleBarChart({ data, width = 600, height = 200 }: { data: ChartDataPo
   const colors = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--destructive))', 'hsl(220, 80%, 50%)', 'hsl(280, 60%, 50%)', 'hsl(160, 60%, 45%)', 'hsl(30, 80%, 55%)'];
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
+      {/* Y-axis gridlines */}
+      {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
+        const y = height - 30 - ratio * (height - 60);
+        return (
+          <line key={i} x1="40" y1={y} x2={width - 20} y2={y} stroke="hsl(var(--muted))" strokeWidth="1" />
+        );
+      })}
       {data.map((d, i) => {
         const barHeight = (d.value / maxVal) * (height - 60);
         const x = i * (barWidth + 8) + 40;
         const y = height - 30 - barHeight;
         return (
           <g key={i}>
-            <rect x={x} y={y} width={barWidth} height={barHeight} rx="3" fill={colors[i % colors.length]} opacity="0.85" />
+            <rect x={x} y={y} width={barWidth} height={barHeight} rx="4" fill={colors[i % colors.length]} opacity="0.9">
+              <title>{d.label}: {d.value}</title>
+            </rect>
             <text x={x + barWidth / 2} y={height - 14} textAnchor="middle" className="text-[10px] fill-muted-foreground">{d.label.slice(0, 10)}</text>
-            <text x={x + barWidth / 2} y={y - 4} textAnchor="middle" className="text-[10px] fill-foreground font-medium">{d.value}</text>
+            <text x={x + barWidth / 2} y={y - 6} textAnchor="middle" className="text-[10px] fill-foreground font-medium">{d.value}</text>
           </g>
         );
       })}
@@ -243,6 +252,7 @@ export default function TrendsPage() {
   const [wordcloud, setWordcloud] = useState<WordTag[]>([]);
   const [trending, setTrending] = useState<Database['public']['Tables']['products']['Row'][]>([]);
   const [loading, setLoading] = useState(true);
+  const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchTrends = async () => {
@@ -294,7 +304,7 @@ export default function TrendsPage() {
               <Badge
                 key={r}
                 variant={timeRange === r ? 'default' : 'outline'}
-                className="cursor-pointer"
+                className="cursor-pointer hover:scale-105 transition-transform"
                 onClick={() => setTimeRange(r)}
               >
                 {r}
@@ -304,9 +314,10 @@ export default function TrendsPage() {
         </div>
 
         {/* Trend Overview Line Chart */}
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle>{t('trend_overview') || 'Trend Overview'}</CardTitle>
+            <CardDescription>Product trend changes over selected time period</CardDescription>
           </CardHeader>
           <CardContent>
             <SimpleLineChart data={generateLineChartData(timeRange)} />
@@ -314,9 +325,10 @@ export default function TrendsPage() {
         </Card>
 
         {/* Word Cloud */}
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle>{t('trending_topics')}</CardTitle>
+            <CardDescription>Most mentioned topics in AI community</CardDescription>
           </CardHeader>
           <CardContent>
             {wordPositions.length === 0 ? (
@@ -352,9 +364,10 @@ export default function TrendsPage() {
         </Card>
 
         {/* Category Comparison Bar Chart */}
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle>{t('category_comparison') || 'Category Comparison'}</CardTitle>
+            <CardDescription>AI product distribution across different categories</CardDescription>
           </CardHeader>
           <CardContent>
             <SimpleBarChart data={generateBarChartData()} />
@@ -376,20 +389,30 @@ export default function TrendsPage() {
                   {trending.map((p, i) => (
                     <div
                       key={p.id}
-                      className="flex items-center gap-4 p-4 rounded-lg hover:bg-muted/50 transition-colors"
+                      className="flex items-center gap-4 p-4 rounded-lg hover:bg-muted/50 transition-colors group"
                     >
                       <span className="text-2xl font-bold text-muted-foreground/50 w-8 text-center">
                         {i + 1}
                       </span>
-                      <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
+                      <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
                         {p.logo_url ? (
-                          <img src={p.logo_url} alt={p.name} className="h-8 w-8 object-cover rounded" />
+                          <img src={p.logo_url} alt={p.name} className="h-full w-full object-cover rounded-lg" />
                         ) : (
                           <span className="font-bold text-sm">{p.name.charAt(0)}</span>
                         )}
                       </div>
-                      <div className="flex-1">
-                        <p className="font-medium">{p.name}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium truncate">{p.name}</p>
+                          {p.github_url && (
+                            <a href={p.github_url} target="_blank" rel="noopener noreferrer" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Github className="h-4 w-4 text-muted-foreground" />
+                            </a>
+                          )}
+                          <Link href={`/discover/${(p as any).slug || p.id}`} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                          </Link>
+                        </div>
                         <p className="text-sm text-muted-foreground">{p.category}</p>
                       </div>
                       <div className="text-right">
@@ -433,7 +456,7 @@ export default function TrendsPage() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
+                              <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
                                 <span className="font-bold text-xs">{p.name.charAt(0)}</span>
                               </div>
                               <div>
@@ -491,7 +514,7 @@ export default function TrendsPage() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
+                              <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
                                 <span className="font-bold text-xs">{p.name.charAt(0)}</span>
                               </div>
                               <div>
