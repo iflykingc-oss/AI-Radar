@@ -29,25 +29,48 @@ interface ChartDataPoint {
 }
 
 /** Simple SVG line chart showing values over time. */
-function SimpleLineChart({ data, width = 600, height = 200 }: { data: ChartDataPoint[]; width?: number; height?: number }) {
+function SimpleLineChart({ data, width = 600, height = 200, animated = false }: { data: ChartDataPoint[]; width?: number; height?: number; animated?: boolean }) {
   const maxVal = Math.max(...data.map(d => d.value), 1);
   const points = data.map((d, i) => ({
     x: (i / Math.max(data.length - 1, 1)) * (width - 60) + 40,
     y: height - 30 - (d.value / maxVal) * (height - 60),
   }));
   const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  
+  // Create gradient fill area under the line
+  const areaD = pathD + ` L ${points[points.length - 1].x} ${height - 30} L ${points[0].x} ${height - 30} Z`;
+  
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
+      <defs>
+        <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+        </linearGradient>
+      </defs>
       {/* Y-axis labels */}
-      {[0, 0.5, 1].map((ratio, i) => {
+      {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
         const y = height - 30 - ratio * (height - 60);
         const val = Math.round(ratio * maxVal);
         return (
-          <text key={i} x={36} y={y + 4} textAnchor="end" className="text-[10px] fill-muted-foreground">{val}</text>
+          <g key={i}>
+            <line x1="40" y1={y} x2={width - 20} y2={y} stroke="hsl(var(--muted))" strokeWidth="1" />
+            <text x={36} y={y + 4} textAnchor="end" className="text-[10px] fill-muted-foreground">{val}</text>
+          </g>
         );
       })}
-      <path d={pathD} fill="none" stroke="hsl(var(--primary))" strokeWidth="2" />
-      {points.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="3" fill="hsl(var(--primary))" />)}
+      {/* Area fill */}
+      <path d={areaD} fill="url(#lineGradient)" />
+      {/* Line */}
+      <path d={pathD} fill="none" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Points */}
+      {points.map((p, i) => (
+        <g key={i}>
+          <circle cx={p.x} cy={p.y} r="4" fill="hsl(var(--background))" stroke="hsl(var(--primary))" strokeWidth="2" />
+          <circle cx={p.x} cy={p.y} r="2" fill="hsl(var(--primary))" />
+        </g>
+      ))}
+      {/* X-axis labels */}
       {data.filter((_, i) => i % Math.max(Math.ceil(data.length / 8), 1) === 0).map((d, i) => {
         const idx = data.indexOf(d);
         return <text key={i} x={points[idx].x} y={height - 8} textAnchor="middle" className="text-[10px] fill-muted-foreground">{d.label}</text>;
