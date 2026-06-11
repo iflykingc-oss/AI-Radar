@@ -63,7 +63,10 @@ export class RSSSource implements DataSource {
       try {
         console.log(`[${this.name}] Fetching feed: ${feed.name} (${feed.url})`);
 
-        const response = await fetch(feed.url);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const response = await fetch(feed.url, { signal: controller.signal });
+        clearTimeout(timeout);
         if (!response.ok) {
           console.error(
             `[${this.name}] Failed to fetch ${feed.name}: HTTP ${response.status}`

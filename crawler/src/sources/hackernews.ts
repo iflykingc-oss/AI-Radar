@@ -77,7 +77,10 @@ export class HackerNewsSource implements DataSource {
    * Fetch the list of top story IDs from HN.
    */
   private async fetchTopStoryIds(): Promise<number[]> {
-    const response = await fetch(`${HN_API_BASE}/topstories.json`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const response = await fetch(`${HN_API_BASE}/topstories.json`, { signal: controller.signal });
+    clearTimeout(timeout);
     if (!response.ok) {
       throw new Error(`Failed to fetch top stories: HTTP ${response.status}`);
     }
@@ -108,7 +111,10 @@ export class HackerNewsSource implements DataSource {
    */
   private async fetchStory(id: number): Promise<HackerNewsStory | null> {
     try {
-      const response = await fetch(`${HN_API_BASE}/item/${id}.json`);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const response = await fetch(`${HN_API_BASE}/item/${id}.json`, { signal: controller.signal });
+      clearTimeout(timeout);
       if (!response.ok) return null;
       return (await response.json()) as HackerNewsStory;
     } catch {

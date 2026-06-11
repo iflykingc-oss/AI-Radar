@@ -61,6 +61,12 @@ async function runCrawlCycle(): Promise<void> {
   console.log(`[main] Crawl cycle started at ${new Date().toISOString()}`);
   console.log('='.repeat(60));
 
+  // Global timeout: 5 minutes max per crawl cycle
+  const globalTimeout = setTimeout(() => {
+    console.error('[main] Global timeout (5 min) reached. Forcing exit.');
+    process.exit(1);
+  }, 5 * 60 * 1000);
+
   // Step 1: Fetch from all data sources
   const sources = initializeSources();
   const allProducts: CrawledProduct[] = [];
@@ -134,6 +140,7 @@ async function runCrawlCycle(): Promise<void> {
     console.error(`[main] Failed to store products: ${message}`);
   }
 
+  clearTimeout(globalTimeout);
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
   console.log(`[main] Crawl cycle completed in ${duration}s`);
   console.log('='.repeat(60));
