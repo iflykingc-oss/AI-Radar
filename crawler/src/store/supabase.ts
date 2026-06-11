@@ -181,19 +181,20 @@ async function bulkInsert(
     updated_at: new Date().toISOString(),
   }));
 
+  // Use upsert with slug as conflict key to handle duplicates gracefully
   const { data, error } = await supabase
     .from(TABLE_NAME)
-    .insert(rows)
+    .upsert(rows, { onConflict: 'slug', ignoreDuplicates: false })
     .select();
 
   if (error) {
     console.error(
-      `[store] Error inserting ${products.length} products: ${error.message}`
+      `[store] Error upserting ${products.length} products: ${error.message}`
     );
     return { inserted: 0, updated: 0 };
   }
 
-  console.log(`[store] Inserted ${data?.length ?? 0} new products.`);
+  console.log(`[store] Upserted ${data?.length ?? 0} products.`);
   return { inserted: data?.length ?? 0, updated: 0 };
 }
 
