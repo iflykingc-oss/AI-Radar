@@ -23,6 +23,9 @@ import { DevtoSource } from './sources/devto.js';
 import { LobstersSource } from './sources/lobsters.js';
 import { NpmSource } from './sources/npm.js';
 import { RedditSource } from './sources/reddit.js';
+import { OSSInsightSource } from './sources/ossinsight.js';
+import { HuggingFaceSource } from './sources/huggingface.js';
+import { TelegramSource } from './sources/telegram.js';
 import { deduplicate } from './pipeline/dedup.js';
 import { enrich } from './pipeline/enrich.js';
 import { scoreProducts } from './pipeline/score.js';
@@ -54,6 +57,9 @@ function initializeSources(): DataSource[] {
     new LobstersSource(),
     new NpmSource(),
     new RedditSource(),
+    new OSSInsightSource(),
+    new HuggingFaceSource(),
+    new TelegramSource(),
   ];
 }
 

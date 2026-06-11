@@ -13,28 +13,75 @@ import { XMLParser } from 'fast-xml-parser';
 
 /**
  * RSS feed URLs to scrape for AI product news.
+ * Organized by category for maintainability.
  */
 const RSS_FEEDS: Array<{ url: string; name: string }> = [
-  {
-    url: 'https://techcrunch.com/category/artificial-intelligence/feed/',
-    name: 'TechCrunch AI',
-  },
-  {
-    url: 'https://venturebeat.com/category/ai/feed/',
-    name: 'VentureBeat AI',
-  },
-  {
-    url: 'https://www.artificialintelligence-news.com/feed/',
-    name: 'AI News',
-  },
-  {
-    url: 'https://the-decoder.com/feed/',
-    name: 'The Decoder',
-  },
-  {
-    url: 'https://www.marktechpost.com/feed/',
-    name: 'MarkTechPost',
-  },
+  // === Tech Media ===
+  { url: 'https://techcrunch.com/category/artificial-intelligence/feed/', name: 'TechCrunch AI' },
+  { url: 'https://venturebeat.com/category/ai/feed/', name: 'VentureBeat AI' },
+  { url: 'https://www.theverge.com/rss/ai-artificial-intelligence/index.xml', name: 'The Verge AI' },
+  { url: 'https://www.technologyreview.com/feed/', name: 'MIT Tech Review' },
+  { url: 'https://www.wired.com/feed/tag/ai/latest/rss', name: 'Wired AI' },
+  { url: 'https://feeds.arstechnica.com/arstechnica/index', name: 'Ars Technica' },
+  { url: 'https://www.artificialintelligence-news.com/feed/', name: 'AI News' },
+  { url: 'https://the-decoder.com/feed/', name: 'The Decoder' },
+  { url: 'https://www.marktechpost.com/feed/', name: 'MarkTechPost' },
+  { url: 'https://aibusiness.com/rss.xml', name: 'AI Business' },
+  { url: 'https://lastweekin.ai/feed', name: 'Last Week in AI' },
+  { url: 'https://semianalysis.com/feed/', name: 'SemiAnalysis' },
+  { url: 'https://www.newscientist.com/subject/artificial-intelligence/feed/', name: 'New Scientist AI' },
+  { url: 'https://spectrum.ieee.org/rss/topic/artificial-intelligence', name: 'IEEE Spectrum AI' },
+  { url: 'https://www.nature.com/subjects/machine-learning.rss', name: 'Nature ML' },
+  { url: 'https://www.nature.com/natmachintell.rss', name: 'Nature Machine Intelligence' },
+  { url: 'https://www.science.org/rss/news_current.xml', name: 'Science Magazine' },
+
+  // === Chinese Media ===
+  { url: 'https://www.jiqizhixin.com/rss', name: '机器之心' },
+  { url: 'https://www.qbitai.com/feed', name: '量子位' },
+  { url: 'https://sspai.com/feed', name: '少数派' },
+  { url: 'https://www.infoq.cn/feed', name: 'InfoQ中文' },
+  { url: 'https://www.ruanyifeng.com/blog/atom.xml', name: '阮一峰周刊' },
+
+  // === Company Blogs ===
+  { url: 'https://huggingface.co/blog/feed.xml', name: 'HuggingFace Blog' },
+  { url: 'https://research.google/blog/rss/', name: 'Google Research' },
+  { url: 'https://deepmind.google/blog/rss.xml', name: 'Google DeepMind' },
+  { url: 'https://www.microsoft.com/en-us/research/blog/category/artificial-intelligence/feed/', name: 'MS Research AI' },
+  { url: 'https://www.amazon.science/index.rss', name: 'Amazon Science' },
+  { url: 'https://machinelearning.apple.com/rss.xml', name: 'Apple ML' },
+  { url: 'https://mistral.ai/news/rss.xml', name: 'Mistral AI' },
+  { url: 'https://cohere.com/blog/rss.xml', name: 'Cohere' },
+  { url: 'https://ollama.com/blog/rss.xml', name: 'Ollama Blog' },
+  { url: 'https://blog.vllm.ai/feed', name: 'vLLM Blog' },
+  { url: 'https://blog.langchain.dev/rss/', name: 'LangChain Blog' },
+  { url: 'https://www.llamaindex.ai/blog/rss.xml', name: 'LlamaIndex Blog' },
+
+  // === Research & Academic ===
+  { url: 'https://bair.berkeley.edu/blog/feed.xml', name: 'BAIR Blog' },
+  { url: 'https://thegradient.pub/rss/', name: 'The Gradient' },
+  { url: 'https://blog.ml.cmu.edu/feed/', name: 'CMU ML Blog' },
+  { url: 'https://allenai.org/rss.xml', name: 'Allen AI' },
+  { url: 'https://www.lesswrong.com/feed.xml', name: 'LessWrong' },
+  { url: 'https://www.alignmentforum.org/feed.xml', name: 'Alignment Forum' },
+
+  // === Newsletters & Personal Blogs ===
+  { url: 'https://simonwillison.net/atom/everything/', name: 'Simon Willison' },
+  { url: 'https://lilianweng.github.io/index.xml', name: 'Lilian Weng' },
+  { url: 'https://karpathy.ai/feed.xml', name: 'Andrej Karpathy' },
+  { url: 'https://www.deeplearning.ai/the-batch/feed/', name: 'The Batch (Andrew Ng)' },
+  { url: 'https://importai.substack.com/feed', name: 'Import AI' },
+  { url: 'https://www.latent.space/feed', name: 'Latent Space' },
+  { url: 'https://www.interconnects.ai/feed', name: 'Interconnects' },
+  { url: 'https://huyenchip.com/feed.xml', name: 'Huyen Chip' },
+  { url: 'https://eugeneyan.com/rss/', name: 'Eugene Yan' },
+  { url: 'https://magazine.sebastianraschka.com/feed', name: 'Sebastian Raschka' },
+  { url: 'https://wandb.ai/site/rss.xml', name: 'Weights & Biases' },
+  { url: 'https://www.bensbites.com/feed', name: "Ben's Bites" },
+  { url: 'https://every.to/chain-of-thought/feed.xml', name: 'Chain of Thought' },
+
+  // === Product & Community ===
+  { url: 'https://www.producthunt.com/feed', name: 'Product Hunt' },
+  { url: 'https://www.ruanyifeng.com/blog/atom.xml', name: '阮一峰周刊' },
 ];
 
 /**
