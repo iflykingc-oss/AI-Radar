@@ -35,17 +35,25 @@ export function enrich(products: CrawledProduct[]): CrawledProduct[] {
 
 /**
  * Generate a URL-safe slug from the product name if not already set.
- * Includes source suffix to avoid collisions between different products
- * with similar names from different sources.
+ * Includes source suffix and a short hash to avoid collisions.
  */
 function enrichSlug(product: CrawledProduct): void {
   if (!product.slug) {
     const base = product.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
-    // Add source suffix to make slug unique
-    product.slug = `${base}-${product.source}`;
+      .replace(/^-|-$/g, '')
+      .substring(0, 40); // Limit length
+    // Create a short hash from name + source + website_url for uniqueness
+    const hashInput = `${product.name}-${product.source}-${product.website_url || ''}`;
+    let hash = 0;
+    for (let i = 0; i < hashInput.length; i++) {
+      const char = hashInput.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    const shortHash = Math.abs(hash).toString(36).substring(0, 6);
+    product.slug = `${base}-${product.source}-${shortHash}`;
   }
 }
 
