@@ -46,10 +46,10 @@ export class GitHubSource implements DataSource {
   private token: string;
 
   constructor() {
-    const token = process.env.GITHUB_TOKEN;
+    const token = process.env.CRAWLER_GITHUB_TOKEN || process.env.GITHUB_TOKEN;
     if (!token) {
       console.warn(
-        `[${this.name}] GITHUB_TOKEN is not set. This source will be skipped.`
+        `[${this.name}] CRAWLER_GITHUB_TOKEN is not set. This source will be skipped.`
       );
     }
     this.token = token || '';
