@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Database } from '@/lib/supabase/types';
+import { useTranslations } from 'next-intl';
 
 type Product = Database['public']['Tables']['products']['Row'];
 
@@ -43,30 +44,23 @@ function SimpleLineChart({ data, width = 600, height = 200 }: { data: { label: s
   }));
   const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
 
-  // Grid lines (Y axis)
   const gridLines = 4;
   const gridY = Array.from({ length: gridLines + 1 }, (_, i) => ({
     y: padding.top + (i / gridLines) * chartH,
     label: Math.round(maxVal - (i / gridLines) * range),
   }));
-
-  // X axis labels
   const step = Math.max(Math.ceil(data.length / 8), 1);
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto" role="img" aria-label="Products trend over 30 days">
-      {/* Grid lines */}
       {gridY.map((g, i) => (
         <g key={i}>
           <line x1={padding.left} y1={g.y} x2={width - padding.right} y2={g.y} stroke="hsl(var(--muted))" strokeWidth="0.5" strokeDasharray="4" />
           <text x={padding.left - 6} y={g.y + 4} textAnchor="end" className="text-[9px] fill-muted-foreground">{g.label}</text>
         </g>
       ))}
-      {/* Line */}
       <path d={pathD} fill="none" stroke="hsl(var(--primary))" strokeWidth="2" />
-      {/* Dots */}
       {points.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="2.5" fill="hsl(var(--primary))" />)}
-      {/* X labels */}
       {data.filter((_, i) => i % step === 0).map((d, i) => {
         const idx = data.indexOf(d);
         return <text key={i} x={points[idx].x} y={height - 6} textAnchor="middle" className="text-[9px] fill-muted-foreground">{d.label}</text>;
@@ -93,14 +87,12 @@ function SimpleBarChart({ data, width = 600, height = 240 }: { data: { label: st
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto" role="img" aria-label="Category distribution">
-      {/* Grid */}
       {gridY.map((g, i) => (
         <g key={i}>
           <line x1={padding.left} y1={g.y} x2={width - padding.right} y2={g.y} stroke="hsl(var(--muted))" strokeWidth="0.5" strokeDasharray="4" />
           <text x={padding.left - 6} y={g.y + 4} textAnchor="end" className="text-[9px] fill-muted-foreground">{g.label}</text>
         </g>
       ))}
-      {/* Bars */}
       {data.map((d, i) => {
         const barH = (d.value / maxVal) * chartH;
         const x = padding.left + i * (barWidth + barGap);
@@ -128,6 +120,7 @@ function StatusBadge({ status }: { status: 'active' | 'degraded' | 'offline' }) 
 
 // ---- Main Page ----
 export default function DashboardPage() {
+  const t = useTranslations('dashboard');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -142,13 +135,13 @@ export default function DashboardPage() {
         setProducts(json.products || []);
       } catch (e) {
         console.error('Dashboard fetch error:', e);
-        setError('Failed to load dashboard data.');
+        setError(t('error_loading'));
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, []);
+  }, [t]);
 
   // --- Computed Stats ---
   const totalProducts = products.length;
@@ -204,10 +197,10 @@ export default function DashboardPage() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
     let timeAgo: string;
-    if (diffMins < 1) timeAgo = 'Just now';
-    else if (diffMins < 60) timeAgo = `${diffMins}m ago`;
-    else if (diffHours < 24) timeAgo = `${diffHours}h ago`;
-    else timeAgo = `${diffDays}d ago`;
+    if (diffMins < 1) timeAgo = t('just_now');
+    else if (diffMins < 60) timeAgo = t('minutes_ago', { n: diffMins });
+    else if (diffHours < 24) timeAgo = t('hours_ago', { n: diffHours });
+    else timeAgo = t('days_ago', { n: diffDays });
 
     return {
       name: p.name,
@@ -220,7 +213,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background p-6">
-        <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+        <h1 className="text-2xl font-bold mb-6">{t('title')}</h1>
         <div className="animate-pulse space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -253,13 +246,13 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6">AI Radar Dashboard</h1>
+      <h1 className="text-2xl md:text-3xl font-bold mb-6">{t('title')}</h1>
 
       {/* Overview Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Products</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('total_products')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{totalProducts}</div>
@@ -267,7 +260,7 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Products This Week</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('products_this_week')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{productsThisWeek}</div>
@@ -275,7 +268,7 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active Data Sources</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('active_sources')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{activeSources} <span className="text-lg text-muted-foreground">/ {DATA_SOURCES.length}</span></div>
@@ -283,7 +276,7 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Avg Confidence</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('avg_confidence')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{avgConfidence}<span className="text-lg text-muted-foreground">%</span></div>
@@ -295,7 +288,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Products Trend (30 Days)</CardTitle>
+            <CardTitle className="text-lg">{t('trend_title')}</CardTitle>
           </CardHeader>
           <CardContent>
             <SimpleLineChart data={trendData} width={560} height={200} />
@@ -303,7 +296,7 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Category Distribution</CardTitle>
+            <CardTitle className="text-lg">{t('category_distribution')}</CardTitle>
           </CardHeader>
           <CardContent>
             <SimpleBarChart data={categoryData} width={560} height={240} />
@@ -316,26 +309,22 @@ export default function DashboardPage() {
         {/* Data Source Health Table */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Data Source Health</CardTitle>
+            <CardTitle className="text-lg">{t('source_health')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Source</th>
-                    <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Category</th>
-                    <th className="text-center py-2 pr-4 font-medium text-muted-foreground">Status</th>
-                    <th className="text-right py-2 font-medium text-muted-foreground">Items</th>
+                    <th className="text-left py-2 pr-4 font-medium text-muted-foreground">{t('source_name')}</th>
+                    <th className="text-left py-2 pr-4 font-medium text-muted-foreground">{t('source_category')}</th>
+                    <th className="text-center py-2 pr-4 font-medium text-muted-foreground">{t('source_status')}</th>
+                    <th className="text-right py-2 font-medium text-muted-foreground">{t('source_items')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {DATA_SOURCES.map((ds) => {
-                    const itemCount = products.filter(p =>
-                      p.validation_signals && p.validation_signals[ds.name.replace(/\s+/g, '_').toLowerCase()]
-                    ).length;
                     const randomItems = Math.floor(Math.random() * 50) + 5;
-                    const lastFetch = new Date(Date.now() - Math.floor(Math.random() * 86400000 * 3));
                     return (
                       <tr key={ds.name} className="border-b last:border-0">
                         <td className="py-2 pr-4 font-medium">{ds.name}</td>
@@ -358,12 +347,12 @@ export default function DashboardPage() {
         {/* Recent Activity Feed */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Recent Activity</CardTitle>
+            <CardTitle className="text-lg">{t('recent_activity')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {activityEvents.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No recent activity</p>
+                <p className="text-sm text-muted-foreground text-center py-8">{t('no_activity')}</p>
               ) : (
                 activityEvents.map((event, i) => (
                   <div key={i} className="flex gap-3 items-start">
@@ -377,7 +366,7 @@ export default function DashboardPage() {
                         <Badge variant="outline" className="text-xs">{event.category}</Badge>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                        <span>Confidence: {event.confidence}%</span>
+                        <span>{t('confidence_label')}: {event.confidence}%</span>
                         <span>·</span>
                         <span>{event.timeAgo}</span>
                       </div>

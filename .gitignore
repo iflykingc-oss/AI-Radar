@@ -60,3 +60,5 @@ bun.lockb
 # Supabase local
 supabase/.branches
 supabase/.temp
+crawler/.env
+crawler/.env.*

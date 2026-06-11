@@ -24,12 +24,25 @@ const MAX_DESCRIPTION_LENGTH = 500;
  */
 export function enrich(products: CrawledProduct[]): CrawledProduct[] {
   for (const product of products) {
+    enrichSlug(product);
     enrichName(product);
     enrichDescription(product);
     enrichCategory(product);
     enrichTags(product);
   }
   return products;
+}
+
+/**
+ * Generate a URL-safe slug from the product name if not already set.
+ */
+function enrichSlug(product: CrawledProduct): void {
+  if (!product.slug) {
+    product.slug = product.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
 }
 
 /**

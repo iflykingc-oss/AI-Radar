@@ -47,7 +47,17 @@
     "empty_desc": "Start tracking AI products to get updates when they change.",
     "discover_products": "Discover Products",
     "failed_to_load": "Failed to load your watchlist. Please try again.",
-    "no_recent_changes": "No recent changes to tracked products."
+    "no_recent_changes": "No recent changes to tracked products.",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "this_week": "This Week",
+    "earlier": "Earlier",
+    "no_activity": "No activity to display",
+    "pricing_updated": "Pricing updated to {model}",
+    "new_version": "New version released",
+    "stars_reached": "Reached {stars} GitHub stars",
+    "new_review": "New community review posted",
+    "confidence_updated": "AI confidence score updated"
   },
   "compare": {
     "title": "Compare AI Products",
@@ -312,6 +322,28 @@
     "low_active": "Low Active",
     "inactive": "Inactive",
     "dead": "Dead"
+  },
+  "dashboard": {
+    "title": "AI Radar Dashboard",
+    "total_products": "Total Products",
+    "products_this_week": "Products This Week",
+    "active_sources": "Active Data Sources",
+    "avg_confidence": "Avg Confidence",
+    "trend_title": "Products Trend (30 Days)",
+    "category_distribution": "Category Distribution",
+    "source_health": "Data Source Health",
+    "source_name": "Source",
+    "source_category": "Category",
+    "source_status": "Status",
+    "source_items": "Items",
+    "recent_activity": "Recent Activity",
+    "no_activity": "No recent activity",
+    "confidence_label": "Confidence",
+    "just_now": "Just now",
+    "minutes_ago": "{n}m ago",
+    "hours_ago": "{n}h ago",
+    "days_ago": "{n}d ago",
+    "error_loading": "Failed to load dashboard data."
   },
   "settings": {
     "push_channels_title": "Push Channels",

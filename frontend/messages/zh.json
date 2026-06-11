@@ -47,7 +47,17 @@
     "empty_desc": "开始追踪 AI 产品以获取变更通知。",
     "discover_products": "发现产品",
     "failed_to_load": "加载关注列表失败，请重试。",
-    "no_recent_changes": "没有最近的追踪产品变更。"
+    "no_recent_changes": "没有最近的追踪产品变更。",
+    "today": "今天",
+    "yesterday": "昨天",
+    "this_week": "本周",
+    "earlier": "更早",
+    "no_activity": "暂无活动",
+    "pricing_updated": "定价更新为 {model}",
+    "new_version": "发布新版本",
+    "stars_reached": "GitHub 星标达到 {stars}",
+    "new_review": "社区发布新评论",
+    "confidence_updated": "AI 置信度已更新"
   },
   "compare": {
     "title": "对比 AI 产品",
@@ -312,6 +322,28 @@
     "low_active": "低活跃",
     "inactive": "不活跃",
     "dead": "已下架"
+  },
+  "dashboard": {
+    "title": "AI Radar 数据面板",
+    "total_products": "产品总数",
+    "products_this_week": "本周新增",
+    "active_sources": "活跃数据源",
+    "avg_confidence": "平均置信度",
+    "trend_title": "产品趋势（30 天）",
+    "category_distribution": "分类分布",
+    "source_health": "数据源健康状态",
+    "source_name": "数据源",
+    "source_category": "分类",
+    "source_status": "状态",
+    "source_items": "条目",
+    "recent_activity": "最近动态",
+    "no_activity": "暂无最近动态",
+    "confidence_label": "置信度",
+    "just_now": "刚刚",
+    "minutes_ago": "{n} 分钟前",
+    "hours_ago": "{n} 小时前",
+    "days_ago": "{n} 天前",
+    "error_loading": "加载面板数据失败。"
   },
   "settings": {
     "push_channels_title": "推送渠道",

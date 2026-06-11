@@ -1,3 +1,10 @@
+export const SORT_OPTIONS = [
+  { value: 'recent', label: 'Most Recent' },
+  { value: 'confidence', label: 'Highest Confidence' },
+  { value: 'name', label: 'Name A-Z' },
+  { value: 'stars', label: 'Most Stars' },
+] as const;
+
 export const CATEGORIES = [
   'AI Writing',
   'AI Coding',

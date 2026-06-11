@@ -24,32 +24,32 @@ interface ActivityItem {
   color: 'success' | 'warning' | 'info' | 'destructive';
 }
 
-function formatRelativeDate(date: Date): string {
+function formatRelativeDate(date: Date, t: any): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffMins < 1) return t('just_now', { defaultValue: 'Just now' });
+  if (diffMins < 60) return t('minutes_ago', { n: diffMins, defaultValue: `${diffMins}m ago` });
+  if (diffHours < 24) return t('hours_ago', { n: diffHours, defaultValue: `${diffHours}h ago` });
+  if (diffDays < 7) return t('days_ago', { n: diffDays, defaultValue: `${diffDays}d ago` });
   return date.toLocaleDateString();
 }
 
-function getDateGroup(date: Date): string {
+function getDateGroup(date: Date, t: any): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return 'This Week';
-  return 'Earlier';
+  if (diffDays === 0) return t('today', { defaultValue: 'Today' });
+  if (diffDays === 1) return t('yesterday', { defaultValue: 'Yesterday' });
+  if (diffDays < 7) return t('this_week', { defaultValue: 'This Week' });
+  return t('earlier', { defaultValue: 'Earlier' });
 }
 
-function generateActivities(products: Product[]): ActivityItem[] {
+function generateActivities(products: Product[], t: any): ActivityItem[] {
   const activities: ActivityItem[] = [];
 
   products.forEach((p, i) => {
@@ -61,7 +61,7 @@ function generateActivities(products: Product[]): ActivityItem[] {
         type: 'price',
         productName: p.name,
         productSlug: slug,
-        description: `Pricing updated to ${p.pricing_model}`,
+        description: t('pricing_updated', { model: p.pricing_model, defaultValue: `Pricing updated to ${p.pricing_model}` }),
         timestamp: new Date(Date.now() - baseOffset - Math.random() * 3600000),
         color: 'warning',
       });
@@ -72,7 +72,7 @@ function generateActivities(products: Product[]): ActivityItem[] {
         type: 'version',
         productName: p.name,
         productSlug: slug,
-        description: 'New version released',
+        description: t('new_version', { defaultValue: 'New version released' }),
         timestamp: new Date(p.updated_at),
         color: 'info',
       });
@@ -83,7 +83,7 @@ function generateActivities(products: Product[]): ActivityItem[] {
         type: 'stars',
         productName: p.name,
         productSlug: slug,
-        description: `Reached ${(p as any).github_stars.toLocaleString()} GitHub stars`,
+        description: t('stars_reached', { stars: (p as any).github_stars.toLocaleString(), defaultValue: `Reached ${(p as any).github_stars.toLocaleString()} GitHub stars` }),
         timestamp: new Date(Date.now() - i * 172800000 - Math.random() * 3600000),
         color: 'success',
       });
@@ -94,7 +94,7 @@ function generateActivities(products: Product[]): ActivityItem[] {
         type: 'review',
         productName: p.name,
         productSlug: slug,
-        description: 'New community review posted',
+        description: t('new_review', { defaultValue: 'New community review posted' }),
         timestamp: new Date(Date.now() - i * 43200000 - Math.random() * 3600000),
         color: 'info',
       });
@@ -105,7 +105,7 @@ function generateActivities(products: Product[]): ActivityItem[] {
         type: 'confidence',
         productName: p.name,
         productSlug: slug,
-        description: 'AI confidence score updated',
+        description: t('confidence_updated', { defaultValue: 'AI confidence score updated' }),
         timestamp: new Date(Date.now() - i * 259200000 - Math.random() * 3600000),
         color: 'success',
       });
@@ -130,7 +130,7 @@ const activityColorClasses: Record<string, string> = {
   destructive: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
 };
 
-function ActivityItemComponent({ activity }: { activity: ActivityItem }) {
+function ActivityItemComponent({ activity, t }: { activity: ActivityItem; t: any }) {
   return (
     <div className="flex items-start gap-3 py-3">
       <div className={cn('flex-shrink-0 rounded-full p-2', activityColorClasses[activity.color])}>
@@ -145,31 +145,31 @@ function ActivityItemComponent({ activity }: { activity: ActivityItem }) {
         <p className="text-sm text-muted-foreground">{activity.description}</p>
       </div>
       <span className="text-xs text-muted-foreground flex-shrink-0">
-        {formatRelativeDate(activity.timestamp)}
+        {formatRelativeDate(activity.timestamp, t)}
       </span>
     </div>
   );
 }
 
-function ActivityFeed({ products }: { products: Product[] }) {
-  const activities = useMemo(() => generateActivities(products), [products]);
+function ActivityFeed({ products, t }: { products: Product[]; t: any }) {
+  const activities = useMemo(() => generateActivities(products, t), [products, t]);
 
   if (activities.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">No activity to display</p>
+        <p className="text-muted-foreground">{t('no_activity', { defaultValue: 'No activity to display' })}</p>
       </div>
     );
   }
 
   const grouped = activities.reduce<Record<string, ActivityItem[]>>((acc, activity) => {
-    const group = getDateGroup(activity.timestamp);
+    const group = getDateGroup(activity.timestamp, t);
     if (!acc[group]) acc[group] = [];
     acc[group].push(activity);
     return acc;
   }, {});
 
-  const groupOrder = ['Today', 'Yesterday', 'This Week', 'Earlier'];
+  const groupOrder = [t('today', { defaultValue: 'Today' }), t('yesterday', { defaultValue: 'Yesterday' }), t('this_week', { defaultValue: 'This Week' }), t('earlier', { defaultValue: 'Earlier' })];
 
   return (
     <div className="space-y-4">
@@ -180,7 +180,7 @@ function ActivityFeed({ products }: { products: Product[] }) {
             <h3 className="text-sm font-semibold text-muted-foreground mb-2">{group}</h3>
             <div className="border-l-2 border-border pl-4 space-y-1">
               {grouped[group].map((activity, i) => (
-                <ActivityItemComponent key={`${activity.productSlug}-${activity.type}-${i}`} activity={activity} />
+                <ActivityItemComponent key={`${activity.productSlug}-${activity.type}-${i}`} activity={activity} t={t} />
               ))}
             </div>
           </div>
@@ -305,7 +305,7 @@ export default function WatchlistPage() {
               ))}
             </div>
           ) : (
-            <ActivityFeed products={watchlist} />
+            <ActivityFeed products={watchlist} t={t} />
           )}
         </TabsContent>
       </Tabs>

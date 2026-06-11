@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from('products')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('availability_status', 'active');
 
     if (search) {
@@ -42,6 +42,8 @@ export async function GET(request: Request) {
       query = query.order('confidence_score', { ascending: false });
     } else if (sort === 'name') {
       query = query.order('name', { ascending: true });
+    } else if (sort === 'stars') {
+      query = query.order('github_stars', { ascending: false, nullsFirst: false });
     }
 
     const from = (page - 1) * limit;

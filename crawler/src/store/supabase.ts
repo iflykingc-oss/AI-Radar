@@ -6,33 +6,15 @@
  *
  * Uses the Supabase JS client with the service role key for full access.
  *
- * Expected table: crawled_products
- *   - id: int8 (auto-increment primary key)
- *   - name: text
- *   - name_en: text
- *   - name_zh: text
- *   - description: text
- *   - website_url: text
- *   - github_url: text
- *   - tags: text[] (array)
- *   - category: text
- *   - source: text
- *   - source_url: text
- *   - crawled_at: timestamptz
- *   - github_stars: int4
- *   - pricing_model: text
- *   - confidence_score: int4
- *   - source_mentions: text[] (array)
- *   - created_at: timestamptz (default now())
- *   - updated_at: timestamptz (default now())
+ * Writes to the `products` table (same table used by the frontend).
  */
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ScoredProduct, ProductRow } from '../types.js';
 
 /**
- * Supabase table name for crawled products.
+ * Supabase table name for products.
  */
-const TABLE_NAME = 'crawled_products';
+const TABLE_NAME = 'products';
 
 /**
  * Number of recent products to fetch from DB for deduplication.
@@ -60,10 +42,20 @@ function createSupabaseClient(): SupabaseClient {
 }
 
 /**
+ * Generate a URL-safe slug from a product name.
+ */
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+/**
  * Fetch existing products from the database for deduplication comparison.
  * Returns products crawled within the last DEDUP_LOOKBACK_DAYS days.
  *
- * @returns Array of CrawledProduct objects from the database
+ * @returns Array of ScoredProduct objects from the database
  */
 export async function fetchExistingProducts(): Promise<ScoredProduct[]> {
   const supabase = createSupabaseClient();
@@ -79,9 +71,9 @@ export async function fetchExistingProducts(): Promise<ScoredProduct[]> {
   const { data, error } = await supabase
     .from(TABLE_NAME)
     .select(
-      'name, name_en, name_zh, description, website_url, github_url, tags, category, source, source_url, crawled_at, github_stars, pricing_model, confidence_score, source_mentions'
+      'slug, name, name_en, name_zh, description, website_url, github_url, tags, category, source, source_url, crawled_at, github_stars, pricing_model, confidence_score, source_mentions'
     )
-    .gte('crawled_at', lookbackDate.toISOString())
+    .gte('created_at', lookbackDate.toISOString())
     .limit(10000);
 
   if (error) {
@@ -98,7 +90,7 @@ export async function fetchExistingProducts(): Promise<ScoredProduct[]> {
  * Insert or update scored products in the database.
  *
  * For each product:
- * - If a product with the same name already exists, UPDATE it
+ * - If a product with the same slug already exists, UPDATE it
  * - Otherwise, INSERT as a new record
  *
  * @param products - Scored products to write
@@ -112,14 +104,12 @@ export async function upsertProducts(
   let inserted = 0;
   let updated = 0;
 
-  // First, fetch all existing product names to determine insert vs update
+  // Fetch existing products by slug for dedup
+  const slugs = products.map((p) => p.slug);
   const { data: existingRows, error: fetchError } = await supabase
     .from(TABLE_NAME)
-    .select('id, name')
-    .in(
-      'name',
-      products.map((p) => p.name)
-    );
+    .select('id, slug')
+    .in('slug', slugs);
 
   if (fetchError) {
     console.error(
@@ -129,17 +119,17 @@ export async function upsertProducts(
     return await bulkInsert(supabase, products);
   }
 
-  const existingNameSet = new Set(existingRows?.map((r) => r.name) ?? []);
-  const nameToId = new Map(
-    existingRows?.map((r) => [r.name, r.id]) ?? []
+  const existingSlugSet = new Set(existingRows?.map((r) => r.slug) ?? []);
+  const slugToId = new Map(
+    existingRows?.map((r) => [r.slug, r.id]) ?? []
   );
 
   const toInsert: ScoredProduct[] = [];
-  const toUpdate: Array<{ id: number; product: ScoredProduct }> = [];
+  const toUpdate: Array<{ id: string; product: ScoredProduct }> = [];
 
   for (const product of products) {
-    if (existingNameSet.has(product.name)) {
-      const id = nameToId.get(product.name);
+    if (existingSlugSet.has(product.slug)) {
+      const id = slugToId.get(product.slug);
       if (id !== undefined) {
         toUpdate.push({ id, product });
       }
@@ -209,9 +199,11 @@ async function bulkInsert(
 
 /**
  * Convert a ScoredProduct to a ProductRow for database storage.
+ * Maps crawler fields to the products table schema.
  */
 function toProductRow(product: ScoredProduct): ProductRow {
   return {
+    slug: product.slug || generateSlug(product.name),
     name: product.name,
     name_en: product.name_en,
     name_zh: product.name_zh,
@@ -220,12 +212,19 @@ function toProductRow(product: ScoredProduct): ProductRow {
     github_url: product.github_url,
     tags: product.tags,
     category: product.category,
+    pricing_model: product.pricing_model,
+    github_stars: product.github_stars,
+    confidence_score: product.confidence_score,
+    confidence_level: product.confidence_score >= 80 ? 'high'
+      : product.confidence_score >= 50 ? 'medium'
+      : product.confidence_score >= 20 ? 'low'
+      : 'unverified',
+    availability_status: 'active',
+    source_count: product.source_mentions?.length || 1,
+    // Crawler provenance columns
     source: product.source,
     source_url: product.source_url,
-    crawled_at: product.crawled_at,
-    github_stars: product.github_stars,
-    pricing_model: product.pricing_model,
-    confidence_score: product.confidence_score,
     source_mentions: product.source_mentions,
+    crawled_at: product.crawled_at,
   };
 }

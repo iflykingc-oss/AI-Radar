@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Bookmark, ExternalLink, Github } from 'lucide-react';
+import { Bookmark, ExternalLink, Github, Star } from 'lucide-react';
 import { getConfidenceLevel, formatConfidenceScore } from '@/lib/utils';
 import { LoginModal } from '@/components/auth/LoginModal';
 import { useTranslations } from 'next-intl';
@@ -24,6 +25,7 @@ interface ProductCardProps {
   pricing_model: 'free' | 'freemium' | 'paid' | 'open_source' | null;
   website_url?: string | null;
   github_url?: string | null;
+  github_stars?: number | null;
   is_in_watchlist?: boolean;
 }
 
@@ -53,6 +55,7 @@ export default function ProductCard({
   pricing_model,
   website_url,
   github_url,
+  github_stars,
   is_in_watchlist,
 }: ProductCardProps) {
   const [inWatchlist, setInWatchlist] = useState(is_in_watchlist);
@@ -98,7 +101,7 @@ export default function ProductCard({
           <div className="flex items-center space-x-3">
             <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
               {logo_url ? (
-                <img src={logo_url} alt={name} className="h-10 w-10 object-cover" />
+                <Image src={logo_url} alt={name} width={40} height={40} className="object-cover" />
               ) : (
                 <span className="text-xl font-bold text-muted-foreground">{(name || '?').charAt(0).toUpperCase()}</span>
               )}
@@ -139,8 +142,14 @@ export default function ProductCard({
 
           <div className="flex items-center space-x-1">
             {github_url && (
-              <a href={github_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-md hover:bg-muted transition-colors">
+              <a href={github_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-md hover:bg-muted transition-colors flex items-center gap-1">
                 <Github className="h-4 w-4 text-muted-foreground" />
+                {github_stars != null && github_stars > 0 && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+                    <Star className="h-3 w-3" />
+                    {github_stars >= 1000 ? `${(github_stars / 1000).toFixed(1)}k` : github_stars.toLocaleString()}
+                  </span>
+                )}
               </a>
             )}
             {website_url && (

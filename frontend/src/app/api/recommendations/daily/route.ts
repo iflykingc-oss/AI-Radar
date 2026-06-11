@@ -3,29 +3,27 @@ import { supabase } from '@/lib/supabase/client';
 
 /**
  * GET /api/recommendations/daily
- * Returns daily personalized product recommendations.
+ * Returns daily product recommendations from the products table.
  */
 export async function GET(_request: NextRequest) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    // Query top products by confidence score and weekly growth
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('availability_status', 'active')
+      .order('confidence_score', { ascending: false })
+      .order('weekly_growth_rate', { ascending: false })
+      .limit(10);
 
-    if (user) {
-      const { data: recommendations, error } = await supabase
-        .from('recommendations')
-        .select('*, products(*)')
-        .eq('user_id', user.id)
-        .eq('date', new Date().toISOString().split('T')[0])
-        .limit(10);
-
-      if (!error && recommendations && recommendations.length > 0) {
-        const products = recommendations.map(r => r.products);
-        return NextResponse.json({ products });
-      }
+    if (error) {
+      console.error('Error fetching daily recommendations:', error);
+      return NextResponse.json({ products: [] });
     }
 
-    return NextResponse.json({ products: [] });
+    return NextResponse.json({ products: products || [] });
   } catch (error) {
     console.error('Error fetching daily recommendations:', error);
-    return NextResponse.json({ error: 'Failed to fetch recommendations' }, { status: 500 });
+    return NextResponse.json({ products: [] });
   }
 }

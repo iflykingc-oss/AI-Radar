@@ -12,6 +12,8 @@
 export interface CrawledProduct {
   /** Product name (primary identifier) */
   name: string;
+  /** URL-safe slug derived from name */
+  slug: string;
   /** English name variant, if known */
   name_en?: string;
   /** Chinese name variant, if known */
@@ -65,13 +67,45 @@ export interface DataSource {
 }
 
 /**
- * Supabase table row shape for the crawled_products table.
- * Maps 1:1 to CrawledProduct + confidence_score.
+ * Supabase table row shape for the products table.
+ * Matches the schema in 001_initial_schema.sql + 002_add_crawled_columns.sql.
  */
-export interface ProductRow extends CrawledProduct {
-  id?: number;
-  confidence_score: number;
-  source_mentions: string[];
+export interface ProductRow {
+  id?: string; // UUID
+  slug: string;
+  name: string;
+  name_en?: string;
+  name_zh?: string;
+  description?: string;
+  description_en?: string;
+  description_zh?: string;
+  website_url?: string;
+  github_url?: string;
+  logo_url?: string;
+  category?: string;
+  subcategory?: string;
+  tags?: string[];
+  tech_stack?: string[];
+  pricing_model?: string;
+  pricing_url?: string;
+  availability_status?: string;
+  commercialization_status?: string;
+  funding_stage?: string;
+  founder_info?: string;
+  launch_date?: string;
+  last_seen?: string;
+  confidence_score?: number;
+  confidence_level?: string;
+  validation_signals?: Record<string, unknown>;
+  source_count?: number;
+  weekly_growth_rate?: number;
+  monthly_growth_rate?: number;
+  github_stars?: number;
+  // Crawler provenance columns (migration 002)
+  source?: string;
+  source_url?: string;
+  source_mentions?: string[];
+  crawled_at?: string;
   created_at?: string;
   updated_at?: string;
 }
