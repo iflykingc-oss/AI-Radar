@@ -5,12 +5,16 @@
  * multiple signals. Higher scores indicate the product is more likely
  * to be a real, active AI product worth surfacing to users.
  *
+ * Reference: luban "宁缺毋滥" (rather lack than滥) quality threshold
+ *
  * Scoring rules:
  * - Base score: 20 (every product starts here)
  * - Multi-source verification (2+ sources mention it): +30
  * - GitHub stars > 100: +20
  * - Has official website: +10
  * - Recently active (updated in last 30 days): +20
+ * - Same-source decay: penalize products from dominant sources
+ * - Quality threshold: minimum 30 to be included
  * - Maximum score: 100
  */
 import { ScoredProduct, CrawledProduct } from '../types.js';
@@ -39,7 +43,26 @@ const MAX_SCORE = 100;
 const RECENT_ACTIVITY_THRESHOLD_MS = 30 * 24 * 60 * 60 * 1000;
 
 /**
+ * Quality threshold - products below this score are filtered out.
+ * Reference: luban "宁缺毋滥" pattern
+ */
+const QUALITY_THRESHOLD = 30;
+
+/**
+ * Maximum ratio of products from a single source.
+ * If a source exceeds this ratio, its products get a decay penalty.
+ * Reference: luban same-source decay pattern (15/20 → 4/20)
+ */
+const MAX_SOURCE_RATIO = 0.3;
+
+/**
+ * Decay penalty applied to products from dominant sources.
+ */
+const DOMINANT_SOURCE_DECAY = 10;
+
+/**
  * Score a list of crawled products and return ScoredProduct objects.
+ * Applies quality threshold to filter out low-quality products.
  *
  * @param products - Products to score (should already be deduplicated and enriched)
  * @returns Scored products with confidence_score and source_mentions
@@ -48,10 +71,13 @@ export function scoreProducts(products: CrawledProduct[]): ScoredProduct[] {
   // Group products by normalized name to find multi-source mentions
   const sourceMap = buildSourceMap(products);
 
+  // Calculate source distribution for decay detection
+  const sourceDistribution = calculateSourceDistribution(products);
+
   const scored: ScoredProduct[] = [];
 
   for (const product of products) {
-    const score = computeScore(product, sourceMap);
+    const score = computeScore(product, sourceMap, sourceDistribution);
     const sourceMentions = sourceMap.get(normalizeKey(product.name)) ?? [];
 
     scored.push({
@@ -61,29 +87,47 @@ export function scoreProducts(products: CrawledProduct[]): ScoredProduct[] {
     });
   }
 
-  console.log(`[score] Scored ${scored.length} products. Score distribution: ${buildDistributionSummary(scored)}`);
-  return scored;
+  // Apply quality threshold (宁缺毋滥)
+  const beforeFilter = scored.length;
+  const filtered = scored.filter(p => p.confidence_score >= QUALITY_THRESHOLD);
+  const removed = beforeFilter - filtered.length;
+
+  if (removed > 0) {
+    console.log(`[score] Quality threshold: removed ${removed} products below ${QUALITY_THRESHOLD}`);
+  }
+
+  console.log(`[score] Scored ${filtered.length} products. Score distribution: ${buildDistributionSummary(filtered)}`);
+  return filtered;
 }
 
 /**
  * Compute the confidence score for a single product.
+ * Includes same-source decay for dominant sources.
  */
 function computeScore(
   product: CrawledProduct,
-  sourceMap: Map<string, string[]>
+  sourceMap: Map<string, string[]>,
+  sourceDistribution: Map<string, number>
 ): number {
   let score = BASE_SCORE;
 
   // Multi-source verification
   const normalizedKey = normalizeKey(product.name);
   const sources = sourceMap.get(normalizedKey) ?? [];
-  if (sources.length >= 2) {
+  if (sources.length >= 3) {
+    score += MULTI_SOURCE_BONUS + 5; // Extra bonus for 3+ sources
+  } else if (sources.length >= 2) {
     score += MULTI_SOURCE_BONUS;
   }
 
-  // GitHub stars > 100
-  if (product.github_stars !== undefined && product.github_stars > 100) {
+  // GitHub stars (tiered)
+  const stars = product.github_stars || 0;
+  if (stars >= 10000) {
+    score += GITHUB_STARS_BONUS + 5; // Extra bonus for 10k+ stars
+  } else if (stars >= 1000) {
     score += GITHUB_STARS_BONUS;
+  } else if (stars >= 100) {
+    score += GITHUB_STARS_BONUS - 5;
   }
 
   // Has official website
@@ -91,15 +135,39 @@ function computeScore(
     score += WEBSITE_BONUS;
   }
 
-  // Recent activity (based on crawled_at — if the product was found by
-  // a source that tracks update timestamps, we use that; otherwise
-  // crawled_at being recent is itself a signal)
+  // Recent activity
   if (isRecentlyActive(product)) {
     score += RECENT_ACTIVITY_BONUS;
   }
 
+  // Same-source decay (reference: luban pattern)
+  const sourceRatio = sourceDistribution.get(product.source) || 0;
+  if (sourceRatio > MAX_SOURCE_RATIO) {
+    score -= DOMINANT_SOURCE_DECAY;
+  }
+
   // Clamp to [0, 100]
-  return Math.min(score, MAX_SCORE);
+  return Math.min(Math.max(0, score), MAX_SCORE);
+}
+
+/**
+ * Calculate the ratio of products from each source.
+ */
+function calculateSourceDistribution(products: CrawledProduct[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  const total = products.length;
+
+  for (const product of products) {
+    counts.set(product.source, (counts.get(product.source) || 0) + 1);
+  }
+
+  // Convert counts to ratios
+  const ratios = new Map<string, number>();
+  for (const [source, count] of counts) {
+    ratios.set(source, count / total);
+  }
+
+  return ratios;
 }
 
 /**
@@ -128,12 +196,6 @@ function buildSourceMap(
 
 /**
  * Check if a product shows signs of recent activity.
- * Uses crawled_at as a proxy — if the product was crawled recently,
- * it means the source found it recently, which is itself a signal
- * of recency.
- *
- * For GitHub-sourced products, we could additionally check pushed_at,
- * but the GitHub source already filters to recently-pushed repos.
  */
 function isRecentlyActive(product: CrawledProduct): boolean {
   const crawledTime = new Date(product.crawled_at).getTime();
@@ -143,7 +205,6 @@ function isRecentlyActive(product: CrawledProduct): boolean {
 
 /**
  * Normalize a product name for cross-referencing.
- * Lowercase, strip common suffixes.
  */
 function normalizeKey(name: string): string {
   return name

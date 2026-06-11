@@ -1,4 +1,14 @@
 {
+  "name": "ai-radar",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "quality": "node tools/quality-check.js --verbose",
+    "quality:fix": "node tools/quality-check.js --verbose --fix",
+    "backtest": "node tools/backtest-scoring.js",
+    "dedup": "node tools/dedup-check.js",
+    "dedup:fix": "node tools/dedup-check.js --fix"
+  },
   "devDependencies": {
     "tsx": "^4.22.4"
   }
