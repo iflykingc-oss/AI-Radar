@@ -16,7 +16,7 @@ const HN_API_BASE = 'https://hacker-news.firebaseio.com/v0';
 /**
  * Number of top stories to scan.
  */
-const HN_TOP_STORIES_LIMIT = 30;
+const HN_TOP_STORIES_LIMIT = 100;
 
 /**
  * Keywords that indicate a story might be about an AI product.

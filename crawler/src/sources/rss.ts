@@ -23,6 +23,18 @@ const RSS_FEEDS: Array<{ url: string; name: string }> = [
     url: 'https://venturebeat.com/category/ai/feed/',
     name: 'VentureBeat AI',
   },
+  {
+    url: 'https://www.artificialintelligence-news.com/feed/',
+    name: 'AI News',
+  },
+  {
+    url: 'https://the-decoder.com/feed/',
+    name: 'The Decoder',
+  },
+  {
+    url: 'https://www.marktechpost.com/feed/',
+    name: 'MarkTechPost',
+  },
 ];
 
 /**
