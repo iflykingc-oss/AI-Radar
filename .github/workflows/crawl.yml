@@ -20,6 +20,9 @@ jobs:
       - name: Install dependencies
         run: cd crawler && npm ci
 
+      - name: Build crawler
+        run: cd crawler && npm run build
+
       - name: Run crawler
         run: cd crawler && npm start
         env:
