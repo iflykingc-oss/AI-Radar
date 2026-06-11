@@ -35,6 +35,7 @@ interface FAQItem {
 
 export default function LandingPage() {
   const t = useTranslations('landing');
+  const tNav = useTranslations('nav');
   const pricingTiers: PricingTier[] = t.raw('pricing_tiers') as PricingTier[];
   const faqItems: FAQItem[] = t.raw('faq') as FAQItem[];
 
@@ -334,10 +335,10 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold mb-3">{t('footer_product')}</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/discover" className="hover:text-foreground">{t('nav.discover')}</Link></li>
-                <li><Link href="/watchlist" className="hover:text-foreground">{t('nav.watchlist')}</Link></li>
-                <li><Link href="/compare" className="hover:text-foreground">{t('nav.compare')}</Link></li>
-                <li><Link href="/trends" className="hover:text-foreground">{t('nav.trends')}</Link></li>
+                <li><Link href="/discover" className="hover:text-foreground">{tNav('discover')}</Link></li>
+                <li><Link href="/watchlist" className="hover:text-foreground">{tNav('watchlist')}</Link></li>
+                <li><Link href="/compare" className="hover:text-foreground">{tNav('compare')}</Link></li>
+                <li><Link href="/trends" className="hover:text-foreground">{tNav('trends')}</Link></li>
               </ul>
             </div>
             <div>

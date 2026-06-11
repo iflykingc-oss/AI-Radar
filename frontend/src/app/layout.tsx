@@ -7,6 +7,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { PageTransition } from '@/components/transitions/PageTransition';
+import { ToastProvider } from '@/hooks/useToast';
 import { ToastViewport } from '@/components/ui/Toast';
 import './globals.css';
 
@@ -54,16 +55,18 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <ErrorBoundary>
-              <div className="flex min-h-screen flex-col">
-                <Navbar />
-                <main className="flex-1">
-                  <PageTransition>{children}</PageTransition>
-                </main>
-                <Footer />
-              </div>
-            </ErrorBoundary>
-            <ToastViewport />
+            <ToastProvider>
+              <ErrorBoundary>
+                <div className="flex min-h-screen flex-col">
+                  <Navbar />
+                  <main className="flex-1">
+                    <PageTransition>{children}</PageTransition>
+                  </main>
+                  <Footer />
+                </div>
+              </ErrorBoundary>
+              <ToastViewport />
+            </ToastProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>
