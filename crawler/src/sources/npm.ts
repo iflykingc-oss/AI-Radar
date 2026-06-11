@@ -44,7 +44,7 @@ export class NpmSource implements DataSource {
 
           if (!response.ok) continue;
 
-          const data = await response.json();
+          const data = await response.json() as any;
           if (!data.objects || !Array.isArray(data.objects)) continue;
 
           for (const obj of data.objects) {

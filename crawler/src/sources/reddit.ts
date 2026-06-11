@@ -42,7 +42,7 @@ export class RedditSource implements DataSource {
 
           if (!response.ok) continue;
 
-          const data = await response.json();
+          const data = await response.json() as any;
           const children = data?.data?.children;
           if (!Array.isArray(children)) continue;
 
