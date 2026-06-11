@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,8 +18,11 @@ import {
   Github,
   Twitter,
   ArrowRight,
+  ExternalLink,
+  Star,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { getConfidenceLevel, formatConfidenceScore } from '@/lib/utils';
 
 interface PricingTier {
   name: string;
@@ -33,11 +39,36 @@ interface FAQItem {
   answer: string;
 }
 
+interface ProductDemo {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  category: string | null;
+  confidence_score: number;
+  pricing_model: string | null;
+  website_url: string | null;
+  github_url: string | null;
+  github_stars: number | null;
+  tags: string[];
+}
+
 export default function LandingPage() {
   const t = useTranslations('landing');
   const tNav = useTranslations('nav');
   const pricingTiers: PricingTier[] = t.raw('pricing_tiers') as PricingTier[];
   const faqItems: FAQItem[] = t.raw('faq') as FAQItem[];
+
+  const [topProducts, setTopProducts] = useState<ProductDemo[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/products?limit=6&sort=confidence')
+      .then(r => r.json())
+      .then(d => setTopProducts(d.products || []))
+      .catch(() => {})
+      .finally(() => setProductsLoading(false));
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -249,6 +280,92 @@ export default function LandingPage() {
               <div className="text-5xl font-extrabold text-primary">10+</div>
               <p className="mt-2 text-muted-foreground">Channels Monitored</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 6.5: Product Demo */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold">Discover Top AI Products</h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Real products, validated by our 4D verification system
+            </p>
+          </div>
+
+          {productsLoading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-48 rounded-xl bg-muted animate-pulse" />
+              ))}
+            </div>
+          ) : topProducts.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+              {topProducts.map((product) => {
+                const confidence = getConfidenceLevel(product.confidence_score);
+                const confidenceColor = {
+                  high: 'bg-success/10 text-success',
+                  medium: 'bg-warning/10 text-warning',
+                  low: 'bg-destructive/10 text-destructive',
+                  unverified: 'bg-muted text-muted-foreground',
+                }[confidence];
+
+                return (
+                  <Card key={product.id} className="p-6 hover:shadow-lg transition-shadow">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="font-semibold text-lg">{product.name}</h3>
+                        <p className="text-sm text-muted-foreground">{product.category || 'AI'}</p>
+                      </div>
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${confidenceColor}`}>
+                        {formatConfidenceScore(product.confidence_score)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                      {product.description || 'No description available'}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {(product.tags || []).slice(0, 3).map((tag) => (
+                        <span key={tag} className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {product.github_url && (
+                        <a href={product.github_url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
+                          <Github className="h-4 w-4" />
+                        </a>
+                      )}
+                      {product.website_url && (
+                        <a href={product.website_url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      )}
+                      {product.github_stars && product.github_stars > 0 && (
+                        <span className="text-xs text-muted-foreground flex items-center gap-0.5 ml-auto">
+                          <Star className="h-3 w-3" />
+                          {product.github_stars >= 1000 ? `${(product.github_stars / 1000).toFixed(1)}k` : product.github_stars}
+                        </span>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Products loading...</p>
+            </div>
+          )}
+
+          <div className="text-center mt-8">
+            <Button size="lg" asChild>
+              <Link href="/discover">
+                Explore All Products <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
