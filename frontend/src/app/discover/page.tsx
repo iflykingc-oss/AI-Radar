@@ -1,186 +1,112 @@
-'use client';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { FadeIn } from '@/components/transitions/FadeIn';
+import { CategoryFilterBar } from '@/components/discover/CategoryFilterBar';
+import { CategoryGrid } from '@/components/discover/CategoryGrid';
+import { DiscoverEmptyState } from '@/components/discover/DiscoverEmptyState';
+import { fetchMatureCategories } from '@/lib/api/server';
+import { getTranslations, getLocale } from 'next-intl/server';
+import type { CategoryLayer, CategoryPricing } from '@/components/discover/CategoryFilterBar';
 
-import { useState, useEffect } from 'react';
-import ProductCard from '@/components/ProductCard';
-import { ProductCardGridSkeleton } from '@/components/skeletons/ProductCardSkeleton';
-import { NoResults } from '@/components/empty-states/NoResults';
-import { ErrorState } from '@/components/empty-states/ErrorState';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { CATEGORIES, PRICING_MODELS } from '@/lib/constants';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
-import { Database } from '@/lib/supabase/types';
-import { useTranslations } from 'next-intl';
+export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
-type Product = Database['public']['Tables']['products']['Row'];
-
-export default function DiscoverPage() {
-  const t = useTranslations('discover');
-  const [search, setSearch] = useState('');
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState({
-    category: '',
-    region: '',
-    pricing: '',
-    confidence: '',
-  });
-
-  const fetchProducts = async () => {
-    try {
-      setError(null);
-      const params = new URLSearchParams();
-      if (search) params.set('search', search);
-      if (filters.category) params.set('category', filters.category);
-      if (filters.pricing) params.set('pricing', filters.pricing);
-
-      const res = await fetch(`/api/products?${params}`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch products');
-      }
-      const data = await res.json();
-      setProducts(data.products || []);
-    } catch (e) {
-      console.error('Failed to fetch products:', e);
-      setError(t('failed_to_load'));
-    } finally {
-      setLoading(false);
-    }
+type Props = {
+  searchParams: {
+    layer?: string | string[];
+    pricing?: string | string[];
   };
+};
 
-  useEffect(() => {
-    fetchProducts();
-  }, [search, filters.category, filters.pricing]);
+const ALLOWED_LAYERS: ReadonlyArray<CategoryLayer> = ['mature', 'emerging', 'all'];
+const ALLOWED_PRICING: ReadonlyArray<CategoryPricing> = [
+  'all',
+  'free',
+  'freemium',
+  'paid',
+  'open_source',
+];
 
-  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+/**
+ * Narrow a raw `getLocale()` result (typed as `string`) to the strict
+ * `'en' | 'zh'` union expected by `fetchMatureCategories`. Falls back to
+ * `'en'` for any other locale (e.g. `de`, `ja`).
+ */
+function parseLocale(raw: string): 'en' | 'zh' {
+  return raw === 'zh' ? 'zh' : 'en';
+}
+
+function parseLayer(raw: string | string[] | undefined): CategoryLayer {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return ALLOWED_LAYERS.includes(value as CategoryLayer)
+    ? (value as CategoryLayer)
+    : 'mature';
+}
+
+function parsePricing(raw: string | string[] | undefined): CategoryPricing {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return ALLOWED_PRICING.includes(value as CategoryPricing)
+    ? (value as CategoryPricing)
+    : 'all';
+}
+
+export default async function DiscoverPage({ searchParams }: Props) {
+  const t = await getTranslations('discover');
+  const locale = parseLocale(await getLocale());
+  const layer = parseLayer(searchParams.layer);
+  const pricing = parsePricing(searchParams.pricing);
+
+  // Fetch mature (root) categories from the API.
+  // The API does not accept a `?layer=` filter, so we always fetch the
+  // tree and filter client-side.
+  const data = await fetchMatureCategories(locale);
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
+
+  const hasActiveFilter = layer !== 'mature' || pricing !== 'all';
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Filters Sidebar */}
-        <aside className={`w-full lg:w-64 shrink-0 ${filterOpen ? 'block' : 'hidden lg:block'}`}>
-          <div className="lg:sticky lg:top-20">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">{t('filters')}</h2>
-              <div className="flex items-center gap-2">
-                {activeFilterCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setFilters({ category: '', region: '', pricing: '', confidence: '' })}
-                  >
-                    {t('clear_all')}
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="lg:hidden"
-                  onClick={() => setFilterOpen(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+    <FadeIn direction="up" duration={0.4}>
+      <div className="container mx-auto px-4 py-8 space-y-8" data-testid="discover-page">
+        {/* Page Header */}
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground">
+            {t('browse_categories')}
+          </p>
+        </header>
 
-            <div className="space-y-6">
-              {/* Category */}
-              <div>
-                <h3 className="text-sm font-medium mb-2">{t('category')}</h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {CATEGORIES.map((cat) => (
-                    <Badge
-                      key={cat}
-                      variant={filters.category === cat ? 'default' : 'outline'}
-                      className="cursor-pointer"
-                      onClick={() => setFilters((f) => ({ ...f, category: f.category === cat ? '' : cat }))}
-                    >
-                      {cat}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
+        {/* Filter Bar (client component — needs URL state) */}
+        <CategoryFilterBar
+          layer={layer}
+          pricing={pricing}
+        />
 
-              {/* Pricing */}
-              <div>
-                <h3 className="text-sm font-medium mb-2">{t('pricing')}</h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {PRICING_MODELS.map((mode) => (
-                    <Badge
-                      key={mode}
-                      variant={filters.pricing === mode ? 'default' : 'outline'}
-                      className="cursor-pointer capitalize"
-                      onClick={() => setFilters((f) => ({ ...f, pricing: f.pricing === mode ? '' : mode }))}
-                    >
-                      {mode.replace('_', ' ')}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </aside>
+        {/* Main Content: grid OR empty state */}
+        <section
+          aria-labelledby="discover-grid-heading"
+          data-testid="discover-grid-section"
+        >
+          <h2 id="discover-grid-heading" className="sr-only">
+            {t('categories_heading')}
+          </h2>
 
-        {/* Main Content */}
-        <main className="flex-1">
-          {/* Search Bar */}
-          <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              className="pl-10 pr-10 h-12 text-lg"
-              placeholder={t('search_placeholder')}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
-              <button
-                className="absolute right-3 top-1/2 -translate-y-1/2"
-                onClick={() => setSearch('')}
-              >
-                <X className="h-5 w-5 text-muted-foreground" />
-              </button>
-            )}
-          </div>
-
-          {/* Results Count */}
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-muted-foreground">
-              {loading ? t('loading') : `${products.length} ${t('products_found')}`}
-            </p>
-            <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setFilterOpen(!filterOpen)}>
-              <SlidersHorizontal className="mr-2 h-4 w-4" />
-              {t('filters')} {activeFilterCount > 0 && `(${activeFilterCount})`}
-            </Button>
-          </div>
-
-          {/* Product Grid */}
-          {error ? (
-            <ErrorState
-              message={error}
-              onRetry={fetchProducts}
-            />
-          ) : loading ? (
-            <ProductCardGridSkeleton count={6} />
-          ) : products.length === 0 ? (
-            <NoResults
-              onClearFilters={() => {
-                setSearch('');
-                setFilters({ category: '', region: '', pricing: '', confidence: '' });
-              }}
-            />
+          {items.length === 0 ? (
+            <DiscoverEmptyState hasActiveFilter={hasActiveFilter} />
           ) : (
-            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {products.map((product) => (
-                <ProductCard key={product.id} {...product} />
-              ))}
-            </div>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-medium">
+                  {t('categories_found', { count: total || items.length })}
+                </CardTitle>
+                <CardDescription>{t('subtitle')}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CategoryGrid items={items} />
+              </CardContent>
+            </Card>
           )}
-        </main>
+        </section>
       </div>
-    </div>
+    </FadeIn>
   );
 }

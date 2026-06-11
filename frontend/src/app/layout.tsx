@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
@@ -8,9 +7,8 @@ import Footer from '@/components/layout/Footer';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { PageTransition } from '@/components/transitions/PageTransition';
 import { ToastViewport } from '@/components/ui/Toast';
+import { ToastProvider } from '@/hooks/useToast';
 import './globals.css';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'AI Radar - AI Startup Opportunity Validation Platform | Discover, Validate, Track AI Products',
@@ -46,7 +44,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={inter.className}>
+      <body>
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider
             attribute="class"
@@ -54,16 +52,18 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <ErrorBoundary>
-              <div className="flex min-h-screen flex-col">
-                <Navbar />
-                <main className="flex-1">
-                  <PageTransition>{children}</PageTransition>
-                </main>
-                <Footer />
-              </div>
-            </ErrorBoundary>
-            <ToastViewport />
+            <ToastProvider>
+              <ErrorBoundary>
+                <div className="flex min-h-screen flex-col">
+                  <Navbar />
+                  <main className="flex-1">
+                    <PageTransition>{children}</PageTransition>
+                  </main>
+                  <Footer />
+                </div>
+              </ErrorBoundary>
+              <ToastViewport />
+            </ToastProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

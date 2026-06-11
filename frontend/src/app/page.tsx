@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { LayerEntrySection } from '@/components/home/LayerEntrySection';
 import {
   Search,
   AlertTriangle,
@@ -41,27 +42,31 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen">
       {/* Section 1: Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background py-20 lg:py-32">
+      <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background py-14 lg:py-24">
         <div className="container mx-auto px-4 text-center">
-          <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm">
+          <Badge variant="outline" className="mb-5 px-4 py-1.5 text-sm">
             {t('hero_badge')}
           </Badge>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto">
             {t('hero_title_1')}{' '}
             <span className="text-primary">{t('hero_title_2')}</span>
           </h1>
-          <p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
             {t('hero_desc')}
           </p>
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button size="lg" className="px-8 py-6 text-lg" asChild>
-              <Link href="/discover">{t('cta_free')}</Link>
+              <Link href="/discover" data-testid="hero-primary-cta">
+                {t('cta_free')}
+              </Link>
             </Button>
-            <Button variant="outline" size="lg" className="px-8 py-6 text-lg">
-              {t('cta_demo')} <ArrowRight className="ml-2 h-5 w-5" />
+            <Button variant="outline" size="lg" className="px-8 py-6 text-lg" asChild>
+              <Link href="/launches?range=24h" data-testid="hero-secondary-cta">
+                {t('cta_demo')} <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
             </Button>
           </div>
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground">
+          <div className="mt-9 flex flex-wrap items-center justify-center gap-5 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-success" />
               <span>{t('feature_free')}</span>
@@ -77,6 +82,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Section 1.5: 3-Layer Entry Cards (Phase E ADR-07) */}
+      <LayerEntrySection />
 
       {/* Section 2: Pain Points */}
       <section className="py-20 bg-muted/30">

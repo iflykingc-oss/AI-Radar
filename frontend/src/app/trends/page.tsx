@@ -1,556 +1,238 @@
-'use client';
-
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, Minus, Star, Github, ExternalLink, MessageSquare, ArrowUpRight } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FadeIn } from '@/components/transitions/FadeIn';
-import { TrendsSkeleton } from '@/components/skeletons/TrendsSkeleton';
-import { Database } from '@/lib/supabase/types';
-import { useTranslations } from 'next-intl';
-import Link from 'next/link';
+import { RangeSelector } from '@/components/trends/RangeSelector';
+import { TrendsLineChart, type ChartSeries } from '@/components/trends/TrendsLineChart';
+import { TrendsEmptyState } from '@/components/trends/TrendsEmptyState';
+import { TrendsRankingsTabs } from '@/components/trends/TrendsRankingsTabs';
+import { fetchTrends } from '@/lib/api/server';
+import type { TrendItem, TrendRange } from '@/lib/api/types';
+import { getTranslations } from 'next-intl/server';
+import { notFound } from 'next/navigation';
 
-type WordTag = { name: string; count: number };
+export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
-interface TrendProduct {
-  name: string;
-  category: string;
-  description: string;
-  trendScore: number;
-  weeklyChange: number;
-  monthlyViews: number;
-}
-
-interface ChartDataPoint {
-  label: string;
-  value: number;
-}
-
-/** Simple SVG line chart showing values over time. */
-function SimpleLineChart({ data, width = 600, height = 200, animated = false }: { data: ChartDataPoint[]; width?: number; height?: number; animated?: boolean }) {
-  const maxVal = Math.max(...data.map(d => d.value), 1);
-  const points = data.map((d, i) => ({
-    x: (i / Math.max(data.length - 1, 1)) * (width - 60) + 40,
-    y: height - 30 - (d.value / maxVal) * (height - 60),
-  }));
-  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-  
-  // Create gradient fill area under the line
-  const areaD = pathD + ` L ${points[points.length - 1].x} ${height - 30} L ${points[0].x} ${height - 30} Z`;
-  
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
-      <defs>
-        <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {/* Y-axis labels */}
-      {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
-        const y = height - 30 - ratio * (height - 60);
-        const val = Math.round(ratio * maxVal);
-        return (
-          <g key={i}>
-            <line x1="40" y1={y} x2={width - 20} y2={y} stroke="hsl(var(--muted))" strokeWidth="1" />
-            <text x={36} y={y + 4} textAnchor="end" className="text-[10px] fill-muted-foreground">{val}</text>
-          </g>
-        );
-      })}
-      {/* Area fill */}
-      <path d={areaD} fill="url(#lineGradient)" />
-      {/* Line */}
-      <path d={pathD} fill="none" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Points */}
-      {points.map((p, i) => (
-        <g key={i}>
-          <circle cx={p.x} cy={p.y} r="4" fill="hsl(var(--background))" stroke="hsl(var(--primary))" strokeWidth="2" />
-          <circle cx={p.x} cy={p.y} r="2" fill="hsl(var(--primary))" />
-        </g>
-      ))}
-      {/* X-axis labels */}
-      {data.filter((_, i) => i % Math.max(Math.ceil(data.length / 8), 1) === 0).map((d, i) => {
-        const idx = data.indexOf(d);
-        return <text key={i} x={points[idx].x} y={height - 8} textAnchor="middle" className="text-[10px] fill-muted-foreground">{d.label}</text>;
-      })}
-    </svg>
-  );
-}
-
-/** Simple SVG bar chart comparing categories. */
-function SimpleBarChart({ data, width = 600, height = 200 }: { data: ChartDataPoint[]; width?: number; height?: number }) {
-  const maxVal = Math.max(...data.map(d => d.value), 1);
-  const barWidth = Math.min((width - 60) / data.length - 8, 50);
-  const colors = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--destructive))', 'hsl(220, 80%, 50%)', 'hsl(280, 60%, 50%)', 'hsl(160, 60%, 45%)', 'hsl(30, 80%, 55%)'];
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
-      {/* Y-axis gridlines */}
-      {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
-        const y = height - 30 - ratio * (height - 60);
-        return (
-          <line key={i} x1="40" y1={y} x2={width - 20} y2={y} stroke="hsl(var(--muted))" strokeWidth="1" />
-        );
-      })}
-      {data.map((d, i) => {
-        const barHeight = (d.value / maxVal) * (height - 60);
-        const x = i * (barWidth + 8) + 40;
-        const y = height - 30 - barHeight;
-        return (
-          <g key={i}>
-            <rect x={x} y={y} width={barWidth} height={barHeight} rx="4" fill={colors[i % colors.length]} opacity="0.9">
-              <title>{d.label}: {d.value}</title>
-            </rect>
-            <text x={x + barWidth / 2} y={height - 14} textAnchor="middle" className="text-[10px] fill-muted-foreground">{d.label.slice(0, 10)}</text>
-            <text x={x + barWidth / 2} y={y - 6} textAnchor="middle" className="text-[10px] fill-foreground font-medium">{d.value}</text>
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
-
-/** Generate mock line chart data based on time range. */
-function generateLineChartData(timeRange: string): ChartDataPoint[] {
-  const now = new Date();
-  let days: number;
-  let formatLabel: (d: Date) => string;
-
-  if (timeRange === '24h') {
-    days = 1;
-    formatLabel = (d) => d.getHours().toString() + ':00';
-  } else if (timeRange === '7d') {
-    days = 7;
-    formatLabel = (d) => (d.getMonth() + 1) + '/' + d.getDate();
-  } else if (timeRange === '30d') {
-    days = 30;
-    formatLabel = (d) => (d.getMonth() + 1) + '/' + d.getDate();
-  } else if (timeRange === '90d') {
-    days = 90;
-    formatLabel = (d) => (d.getMonth() + 1) + '/' + d.getDate();
-  } else {
-    days = 7;
-    formatLabel = (d) => (d.getMonth() + 1) + '/' + d.getDate();
+/**
+ * Validate the `range` query string against the `TrendRange` union.
+ * Returns the validated value or `null` if the value is unrecognised.
+ *
+ * `24h` is intentionally rejected because it is a `LaunchRange` value,
+ * not a `TrendRange` value (see `lib/api/types.ts`).
+ */
+function parseRange(raw: string | string[] | undefined): TrendRange | null {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  if (value === '7d' || value === '30d' || value === '90d') {
+    return value;
   }
-
-  const data: ChartDataPoint[] = [];
-  let seed = 42;
-  const seededRandom = () => {
-    seed = (seed * 16807) % 2147483647;
-    return (seed - 1) / 2147483646;
-  };
-
-  for (let i = days; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    const base = timeRange === '24h' ? 5 : timeRange === '7d' ? 12 : timeRange === '30d' ? 8 : 10;
-    const value = Math.round(base + seededRandom() * base * 0.8);
-    data.push({ label: formatLabel(d), value });
-  }
-  return data;
-}
-
-/** Generate mock bar chart data for top categories. */
-function generateBarChartData(): ChartDataPoint[] {
-  return [
-    { label: 'AI 写作', value: 45 },
-    { label: '代码助手', value: 38 },
-    { label: '图像生成', value: 52 },
-    { label: '视频编辑', value: 31 },
-    { label: '语音合成', value: 27 },
-    { label: '数据分析', value: 22 },
-    { label: '翻译工具', value: 18 },
-    { label: '教育学习', value: 15 },
-  ];
+  return null;
 }
 
 /**
- * Generate deterministic pseudo-random positions for word cloud layout.
- * Uses a simple seeded PRNG so layout is stable across renders.
+ * Bucket a `TrendItem` into one of the three ranking sections.
+ *
+ * `TrendStatus` is one of `'emerging' | 'peaking' | 'cooling' | 'expired'`.
+ *
+ * - rising:   `emerging` / `peaking` with strength >= 70 and positive
+ *             velocity — signals actively accelerating.
+ * - falling:  `cooling` or `expired` — signals past their peak.
+ * - stable:   anything else (peaking at low strength, emerging at low
+ *             strength, etc.) — visible but not changing much.
  */
-function generateWordLayout(words: WordTag[], width: number, height: number) {
-  let seed = 42;
-  const seededRandom = () => {
-    seed = (seed * 16807) % 2147483647;
-    return (seed - 1) / 2147483646;
-  };
-
-  // Sort by count descending so bigger words get priority placement
-  const sorted = [...words].sort((a, b) => b.count - a.count);
-  const positions: { name: string; x: number; y: number; fontSize: number; count: number }[] = [];
-
-  // Divide the container into a grid and place words in grid cells
-  const cols = Math.ceil(Math.sqrt(words.length * (width / height)));
-  const rows = Math.ceil(words.length / cols) + 1;
-  const cellW = width / cols;
-  const cellH = height / rows;
-
-  for (let i = 0; i < sorted.length; i++) {
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const tag = sorted[i];
-
-    // Font size proportional to count: 12px to 36px
-    const maxCount = Math.max(...words.map(w => w.count), 1);
-    const fontSize = 12 + (tag.count / maxCount) * 24;
-
-    // Position within grid cell with some jitter
-    const jitterX = (seededRandom() - 0.5) * cellW * 0.4;
-    const jitterY = (seededRandom() - 0.5) * cellH * 0.3;
-
-    positions.push({
-      name: tag.name,
-      x: col * cellW + cellW / 2 + jitterX,
-      y: row * cellH + cellH / 2 + jitterY,
-      fontSize,
-      count: tag.count,
-    });
-  }
-
-  return positions;
+function bucketItem(item: TrendItem): 'rising' | 'falling' | 'stable' {
+  if (item.status === 'cooling' || item.status === 'expired') return 'falling';
+  if (item.strength >= 70 && item.velocity > 0) return 'rising';
+  return 'stable';
 }
 
 /**
- * Map a score (0-100) to a color from muted blue to vibrant green.
+ * Build a weekly time series for the line chart, bucketed by trend status.
+ *
+ * The API does not return a time-series payload, so we synthesise one from
+ * the signal `first_seen` date (anchored to the start of the range) and
+ * `evidence.metrics.weekly_growth` (used as a slope modifier). Each bucket
+ * produces a sparse 4-point series, which is enough for the visual to show
+ * relative movement while remaining honest about data scarcity.
+ *
+ * The result is rendered by `<TrendsLineChart>` as three overlapping
+ * coloured lines (rising=emerald, falling=rose, stable=slate).
  */
-function getWordColor(count: number, maxCount: number): string {
-  const ratio = count / maxCount;
-  const hue = 220 - ratio * 60; // 220 (blue) → 160 (teal/green)
-  const saturation = 60 + ratio * 20; // 60% → 80%
-  const lightness = 60 - ratio * 15; // 60% → 45%
-  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+function buildChartSeries(items: TrendItem[], range: TrendRange): ChartSeries[] {
+  const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
+  const endDate = new Date();
+  const startDate = new Date(endDate);
+  startDate.setDate(startDate.getDate() - days);
+
+  const samples = 4;
+
+  const buckets: Record<'rising' | 'falling' | 'stable', ChartSeries> = {
+    rising: {
+      id: 'rising',
+      label: 'rising',
+      color: 'emerald',
+      points: [],
+    },
+    falling: {
+      id: 'falling',
+      label: 'falling',
+      color: 'rose',
+      dasharray: '4 2',
+      points: [],
+    },
+    stable: {
+      id: 'stable',
+      label: 'stable',
+      color: 'slate',
+      dasharray: '2 3',
+      points: [],
+    },
+  };
+
+  // Aggregate per-bucket: count + average weekly growth.
+  const agg: Record<'rising' | 'falling' | 'stable', { count: number; avgGrowth: number }> = {
+    rising: { count: 0, avgGrowth: 0 },
+    falling: { count: 0, avgGrowth: 0 },
+    stable: { count: 0, avgGrowth: 0 },
+  };
+
+  for (const item of items) {
+    const bucket = bucketItem(item);
+    const growth = item.evidence?.metrics?.weekly_growth ?? 0;
+    agg[bucket].count += 1;
+    agg[bucket].avgGrowth += growth;
+  }
+
+  // For each bucket, build `samples` evenly-spaced points from startDate to endDate.
+  (Object.keys(buckets) as Array<keyof typeof buckets>).forEach((key) => {
+    const series = buckets[key];
+    const { count, avgGrowth } = agg[key];
+    if (count === 0) return;
+
+    // Normalise growth to 0-100. ±100 maps to ±50 from baseline (50).
+    const clamped = Math.max(-100, Math.min(100, avgGrowth));
+    const startValue = 50 + clamped * 0.3;
+    const endValue = 50 + clamped * 0.5;
+
+    for (let i = 0; i < samples; i++) {
+      const ratio = i / (samples - 1);
+      const value = Math.round(startValue + (endValue - startValue) * ratio);
+      const pointDate = new Date(startDate);
+      pointDate.setDate(pointDate.getDate() + Math.round(days * ratio));
+      series.points.push({
+        date: pointDate.toISOString().slice(0, 10),
+        value: Math.max(0, Math.min(100, value)),
+      });
+    }
+  });
+
+  return Object.values(buckets);
 }
 
-// Mock data for declining products tab
-const decliningProducts: TrendProduct[] = [
-  { name: "AI Writer Pro", category: "写作", description: "Automated content generation tool", trendScore: 35, weeklyChange: -12, monthlyViews: 8500 },
-  { name: "CodeAssist AI", category: "开发", description: "AI-powered code completion", trendScore: 42, weeklyChange: -8, monthlyViews: 12000 },
-  { name: "VoiceClone Studio", category: "音频", description: "Voice cloning and synthesis", trendScore: 38, weeklyChange: -15, monthlyViews: 6200 },
-  { name: "ChatBot Builder", category: "对话", description: "No-code chatbot creation", trendScore: 45, weeklyChange: -5, monthlyViews: 15000 },
-  { name: "ImageGen Pro", category: "图像", description: "AI image generation tool", trendScore: 50, weeklyChange: -3, monthlyViews: 22000 },
-  { name: "DataMind AI", category: "数据", description: "Automated data analysis", trendScore: 33, weeklyChange: -18, monthlyViews: 4100 },
-  { name: "TranslationMax", category: "翻译", description: "Neural machine translation", trendScore: 40, weeklyChange: -10, monthlyViews: 9800 },
-  { name: "VideoEdit AI", category: "视频", description: "AI video editing assistant", trendScore: 47, weeklyChange: -6, monthlyViews: 11000 },
-];
+type Props = {
+  searchParams: { range?: string | string[] };
+};
 
-// Mock data for stable products tab
-const stableProducts: TrendProduct[] = [
-  { name: "Notion AI", category: "生产力", description: "AI integration for Notion", trendScore: 72, weeklyChange: 2, monthlyViews: 45000 },
-  { name: "GrammarlyGO", category: "写作", description: "AI writing assistant", trendScore: 75, weeklyChange: 1, monthlyViews: 52000 },
-  { name: "Jasper AI", category: "营销", description: "AI marketing copy generator", trendScore: 70, weeklyChange: -1, monthlyViews: 38000 },
-  { name: "Midjourney", category: "图像", description: "AI art generation", trendScore: 78, weeklyChange: 3, monthlyViews: 68000 },
-  { name: "Otter AI", category: "音频", description: "AI meeting transcription", trendScore: 68, weeklyChange: 0, monthlyViews: 28000 },
-  { name: "Synthesia", category: "视频", description: "AI video avatar creation", trendScore: 73, weeklyChange: 2, monthlyViews: 35000 },
-  { name: "Runway ML", category: "视频", description: "AI video editing suite", trendScore: 71, weeklyChange: 1, monthlyViews: 31000 },
-  { name: "Claude", category: "对话", description: "Anthropic's AI assistant", trendScore: 80, weeklyChange: 4, monthlyViews: 72000 },
-];
+export default async function TrendsPage({ searchParams }: Props) {
+  const t = await getTranslations('trends');
+  const tCommon = await getTranslations('common');
+  const parsed = parseRange(searchParams.range);
+  // No range query: default to 7d. An explicitly invalid range (e.g. 24h) still 404s.
+  if (searchParams.range !== undefined && !parsed) notFound();
+  const range: TrendRange = parsed ?? '7d';
 
-export default function TrendsPage() {
-  const t = useTranslations('trends');
-  const [timeRange, setTimeRange] = useState('7d');
-  const [wordcloud, setWordcloud] = useState<WordTag[]>([]);
-  const [trending, setTrending] = useState<Database['public']['Tables']['products']['Row'][]>([]);
-  const [loading, setLoading] = useState(true);
-  const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);
+  // Single fetch — uses the unified `/api/trends?range=...` endpoint.
+  const data = await fetchTrends({ range });
+  const items: TrendItem[] = data?.items ?? [];
 
-  useEffect(() => {
-    const fetchTrends = async () => {
-      try {
-        const [wcRes, trendRes] = await Promise.all([
-          fetch(`/api/trends/wordcloud?range=${timeRange}`),
-          fetch(`/api/trends/top20?range=${timeRange}`),
-        ]);
-        const [wcData, trendData] = await Promise.all([wcRes.json(), trendRes.json()]);
-        setWordcloud(wcData.tags || []);
-        setTrending(trendData.products || []);
-      } catch (e) {
-        console.error('Failed to fetch trends:', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTrends();
-  }, [timeRange]);
+  // Group signals into sections.
+  const groups = {
+    rising: items.filter((i) => bucketItem(i) === 'rising'),
+    falling: items.filter((i) => bucketItem(i) === 'falling'),
+    stable: items.filter((i) => bucketItem(i) === 'stable'),
+  };
 
-  // Word cloud positions computed once for stability
-  const wordPositions = useMemo(() => {
-    if (wordcloud.length === 0) return [];
-    return generateWordLayout(wordcloud, 700, 300);
-  }, [wordcloud]);
+  const series = buildChartSeries(items, range);
 
-  const maxWordCount = useMemo(() => {
-    return Math.max(...wordcloud.map(w => w.count), 1);
-  }, [wordcloud]);
-
-  // Shared table header class
-  const thClass = "px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider";
-
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <TrendsSkeleton />
-      </div>
-    );
-  }
+  // Header subtitle based on range.
+  const headerSubtitle =
+    range === '7d'
+      ? tCommon('last_7_days')
+      : range === '30d'
+        ? tCommon('last_30_days')
+        : tCommon('last_90_days');
 
   return (
     <FadeIn direction="up" duration={0.4}>
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">{t('title')}</h1>
-          <div className="flex items-center gap-2">
-            {['24h', '7d', '30d', '90d'].map((r) => (
-              <Badge
-                key={r}
-                variant={timeRange === r ? 'default' : 'outline'}
-                className="cursor-pointer hover:scale-105 transition-transform"
-                onClick={() => setTimeRange(r)}
-              >
-                {r}
-              </Badge>
-            ))}
+      <div className="container mx-auto px-4 py-8 space-y-8" data-testid="trends-page">
+        {/* Page Header */}
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{headerSubtitle}</p>
           </div>
-        </div>
+          <RangeSelector value={range} />
+        </header>
 
-        {/* Trend Overview Line Chart */}
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <CardTitle>{t('trend_overview') || 'Trend Overview'}</CardTitle>
-            <CardDescription>Product trend changes over selected time period</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <SimpleLineChart data={generateLineChartData(timeRange)} />
-          </CardContent>
-        </Card>
+        {/* Overview Line Chart */}
+        <section
+          aria-labelledby="trends-chart-heading"
+          data-testid="trends-chart-section"
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle id="trends-chart-heading">{t('chart_title')}</CardTitle>
+              <CardDescription>{t('chart_description')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {items.length === 0 ? (
+                <TrendsEmptyState range={range} />
+              ) : (
+                <TrendsLineChart series={series} height={240} />
+              )}
+            </CardContent>
+          </Card>
+        </section>
 
-        {/* Word Cloud */}
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <CardTitle>{t('trending_topics')}</CardTitle>
-            <CardDescription>Most mentioned topics in AI community</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {wordPositions.length === 0 ? (
-              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                No trending topics available
-              </div>
-            ) : (
-              <div className="min-h-[300px] flex items-center justify-center">
-                <svg
-                  viewBox="0 0 700 300"
-                  className="w-full max-w-3xl"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  {wordPositions.map((pos) => (
-                    <text
-                      key={pos.name}
-                      x={pos.x}
-                      y={pos.y}
-                      fontSize={pos.fontSize}
-                      fill={getWordColor(pos.count, maxWordCount)}
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      className="cursor-pointer hover:opacity-80 transition-opacity"
-                      style={{ fontWeight: pos.count / maxWordCount > 0.6 ? '700' : '500' }}
-                    >
-                      {pos.name}
-                    </text>
-                  ))}
-                </svg>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Category Comparison Bar Chart */}
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <CardTitle>{t('category_comparison') || 'Category Comparison'}</CardTitle>
-            <CardDescription>AI product distribution across different categories</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <SimpleBarChart data={generateBarChartData()} />
-          </CardContent>
-        </Card>
-
-        {/* Rankings */}
-        <Tabs defaultValue="rising" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="rising">{t('rising')}</TabsTrigger>
-            <TabsTrigger value="falling">{t('falling')}</TabsTrigger>
-            <TabsTrigger value="stable">{t('stable')}</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="rising">
-            <Card>
-              <CardContent className="py-4">
-                <div className="space-y-2">
-                  {trending.map((p, i) => (
-                    <div
-                      key={p.id}
-                      className="flex items-center gap-4 p-4 rounded-lg hover:bg-muted/50 transition-colors group"
-                    >
-                      <span className="text-2xl font-bold text-muted-foreground/50 w-8 text-center">
-                        {i + 1}
-                      </span>
-                      <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-                        {p.logo_url ? (
-                          <img src={p.logo_url} alt={p.name} className="h-full w-full object-cover rounded-lg" />
-                        ) : (
-                          <span className="font-bold text-sm">{p.name.charAt(0)}</span>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium truncate">{p.name}</p>
-                          {p.github_url && (
-                            <a href={p.github_url} target="_blank" rel="noopener noreferrer" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Github className="h-4 w-4 text-muted-foreground" />
-                            </a>
-                          )}
-                          <Link href={`/discover/${(p as any).slug || p.id}`} className="opacity-0 group-hover:opacity-100 transition-opacity">
-                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                          </Link>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{p.category}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex items-center gap-1 text-success">
-                          <TrendingUp className="h-4 w-4" />
-                          <span className="font-semibold">+{Math.round(p.weekly_growth_rate * 100)}%</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{t('this_week')}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Falling / Declining tab */}
-          <TabsContent value="falling">
-            <Card>
-              <CardContent className="py-4">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className={thClass}>#</th>
-                        <th className={thClass}>Product</th>
-                        <th className={thClass}>Category</th>
-                        <th className={thClass}>Trend Score</th>
-                        <th className={thClass}>Weekly Change</th>
-                        <th className={thClass}>Monthly Views</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {decliningProducts.map((p, i) => (
-                        <tr
-                          key={p.name}
-                          className="border-b last:border-0 hover:bg-muted/50 transition-colors"
-                        >
-                          <td className="px-4 py-3 text-sm text-muted-foreground w-8">
-                            {i + 1}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
-                                <span className="font-bold text-xs">{p.name.charAt(0)}</span>
-                              </div>
-                              <div>
-                                <p className="font-medium text-sm">{p.name}</p>
-                                <p className="text-xs text-muted-foreground">{p.description}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-sm">{p.category}</td>
-                          <td className="px-4 py-3">
-                            <span className="font-medium">{p.trendScore}</span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-1 text-destructive">
-                              <TrendingDown className="h-4 w-4" />
-                              <span className="font-semibold">{p.weeklyChange}%</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground">
-                            {p.monthlyViews.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Stable tab */}
-          <TabsContent value="stable">
-            <Card>
-              <CardContent className="py-4">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className={thClass}>#</th>
-                        <th className={thClass}>Product</th>
-                        <th className={thClass}>Category</th>
-                        <th className={thClass}>Trend Score</th>
-                        <th className={thClass}>Weekly Change</th>
-                        <th className={thClass}>Monthly Views</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {stableProducts.map((p, i) => (
-                        <tr
-                          key={p.name}
-                          className="border-b last:border-0 hover:bg-muted/50 transition-colors"
-                        >
-                          <td className="px-4 py-3 text-sm text-muted-foreground w-8">
-                            {i + 1}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
-                                <span className="font-bold text-xs">{p.name.charAt(0)}</span>
-                              </div>
-                              <div>
-                                <p className="font-medium text-sm">{p.name}</p>
-                                <p className="text-xs text-muted-foreground">{p.description}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-sm">{p.category}</td>
-                          <td className="px-4 py-3">
-                            <span className="font-medium">{p.trendScore}</span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-1 text-muted-foreground">
-                              {p.weeklyChange > 0 ? (
-                                <TrendingUp className="h-3 w-3" />
-                              ) : p.weeklyChange < 0 ? (
-                                <TrendingDown className="h-3 w-3" />
-                              ) : (
-                                <Minus className="h-3 w-3" />
-                              )}
-                              <span className="font-medium">{p.weeklyChange > 0 ? '+' : ''}{p.weeklyChange}%</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground">
-                            {p.monthlyViews.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        {/* Rankings — Tabs (hoisted to client component for Radix boundary) */}
+        <section
+          aria-labelledby="trends-rankings-heading"
+          data-testid="trends-rankings-section"
+        >
+          <h2 id="trends-rankings-heading" className="sr-only">
+            {t('rankings_heading')}
+          </h2>
+          <TrendsRankingsTabs
+            rising={{
+              items: groups.rising,
+              emptyMessage: t('no_rising'),
+            }}
+            falling={{
+              items: groups.falling,
+              emptyMessage: t('no_falling'),
+            }}
+            stable={{
+              items: groups.stable,
+              emptyMessage: t('no_stable'),
+            }}
+            labels={{
+              rising: t('rising'),
+              falling: t('falling'),
+              stable: t('stable'),
+            }}
+            meta={{
+              strength: t('strength'),
+              velocity: t('velocity'),
+              products: t('products'),
+              whyItMatters: t('why_it_matters'),
+            }}
+            defaultTab={
+              groups.rising.length > 0
+                ? 'rising'
+                : groups.falling.length > 0
+                  ? 'falling'
+                  : 'stable'
+            }
+          />
+        </section>
       </div>
     </FadeIn>
   );

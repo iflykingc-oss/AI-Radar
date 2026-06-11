@@ -1,0 +1,265 @@
+%% AI Radar Phase E — Sequence Diagram
+%% Author: 高见远 (Architect)
+%% Date: 2026-05-30
+%% Covers:
+%%   - S1: 首页加载 3 入口卡片
+%%   - S2: /launches 时间轴 + 详情抽屉
+%%   - S3: /trends 词云 + 信号卡
+%%   - S4: Newsletter 订阅流程
+%%   - S5: launch_events → /webhook/launch 推送链路
+%%   - S6: Plan 切换 (mock) + PaywallGate 触发
+%%   - S7: 4 个爬虫写入 launch_events
+
+%% =====================================================
+%% S1: 首页加载 (RSC 并行 SSR)
+%% =====================================================
+sequenceDiagram
+    autonumber
+    actor User as User Browser
+    participant NX as Next.js<br/>app/page.tsx (RSC)
+    participant API as Internal APIs
+    participant DB as Supabase
+
+    User->>NX: GET /
+    NX->>API: parallel fetch
+    par 今日新发布
+        API->>DB: SELECT FROM v_launches_recent LIMIT 10
+        DB-->>API: 10 rows
+    and 趋势方向
+        API->>DB: SELECT FROM v_trends_active LIMIT 5
+        DB-->>API: 5 rows
+    and 分类统计
+        API->>DB: SELECT FROM categories ORDER BY display_order
+        DB-->>API: 13 rows
+    end
+    API-->>NX: {launches, trends, categories}
+    NX->>NX: SSR 渲染 3 入口卡片<br/>+ 横滑 + Top 5
+    NX-->>User: HTML (LCP < 1.5s)
+    User->>User: 5 秒内感知 3 层架构
+
+%% =====================================================
+%% S2: /launches 时间轴
+%% =====================================================
+sequenceDiagram
+    autonumber
+    actor User
+    participant Page as app/launches/page.tsx (RSC)
+    participant API as /api/launches
+    participant DB as Supabase
+    participant Drawer as LaunchDetailDrawer
+
+    User->>Page: GET /launches
+    Page->>API: GET /api/launches?range=24h
+    API->>DB: SELECT * FROM launch_events<br/>WHERE event_at >= now() - interval '24h'<br/>ORDER BY event_at DESC LIMIT 20
+    DB-->>API: 20 rows
+    API-->>Page: {items, pagination}
+    Page->>Page: SSR 渲染时间轴
+    Page-->>User: HTML
+
+    User->>Page: 切换 source 筛选 (URL 同步)
+    Page->>API: GET /api/launches?source=github
+    API->>DB: SELECT ... WHERE source='github'
+    DB-->>API: filtered rows
+    API-->>Page: {items}
+    Page-->>User: 重渲染时间轴
+
+    User->>Page: 点击 LaunchCard
+    Page->>API: GET /api/launches/:id
+    API->>DB: SELECT * FROM launch_events WHERE id=xxx
+    DB-->>API: 1 row
+    API-->>Page: launch detail
+    Page->>Drawer: 打开抽屉 (Radix Dialog)
+    Drawer-->>User: 显示详情
+
+%% =====================================================
+%% S3: /trends 词云 + 信号卡
+%% =====================================================
+sequenceDiagram
+    autonumber
+    actor User
+    participant Page as app/trends/page.tsx
+    participant API as /api/trends
+    participant DB as Supabase
+    participant Cloud as TrendWordCloud (client)
+
+    User->>Page: GET /trends
+    Page->>API: GET /api/trends?status=emerging,peaking,cooling
+    API->>DB: SELECT FROM v_trends_active
+    DB-->>API: 40 rows
+    API-->>Page: {items}
+    Page->>Page: SSR 渲染 Hero + 卡片网格 + Top 20
+    Page-->>User: HTML (含 词云占位)
+
+    User->>Page: 客户端 hydrate
+    Page->>Cloud: next/dynamic 懒加载
+    Cloud->>API: GET /api/trends (重取, 含 raw_data)
+    API-->>Cloud: {items}
+    Cloud->>Cloud: d3 渲染词云<br/>(标签大小=strength, 颜色=status)
+    Cloud-->>User: SVG 词云
+
+    User->>Page: 点击信号卡片
+    Page->>API: GET /api/trends/:id
+    API->>DB: SELECT + JOIN product_signals
+    DB-->>API: signal + related products
+    API-->>Page: detail
+    Page-->>User: 显示关联产品
+
+%% =====================================================
+%% S4: Newsletter 订阅流程
+%% =====================================================
+sequenceDiagram
+    autonumber
+    actor User
+    participant Form as NewsletterForm (client)
+    participant API as POST /api/newsletter/subscribe
+    participant DB as newsletter_subscriptions
+    participant PW as push-worker<br/>/email/send
+    participant LOG as 日志
+
+    User->>Form: 输入 email, 选 daily
+    Form->>Form: 客户端校验 email 格式
+    Form->>API: {email, frequency, language, source}
+    API->>API: 二次校验 (regex)
+    API->>DB: INSERT newsletter_subscriptions<br/>(confirmation_token=uuid())
+    alt 重复订阅
+        DB-->>API: UNIQUE 冲突
+        API-->>Form: 4006 {already_subscribed: true}
+        Form->>User: toast "已订阅, 请去邮箱确认"
+    else 首次订阅
+        DB-->>API: row
+        API->>PW: HTTP POST /email/send<br/>{template: 'subscription-confirm', to, token}
+        PW->>PW: 渲染 HTML 模板
+        PW->>LOG: 写 "已发送 (mock) confirm 邮件" 日志
+        PW-->>API: 200 OK
+        API-->>Form: 201 {subscription_id, mock_email_sent: true}
+        Form->>User: toast "请查收确认邮件"
+    end
+
+    Note over User,LOG: 用户点击邮件中的验证链接
+    User->>API: GET /api/newsletter/confirm?token=xxx
+    API->>DB: UPDATE SET confirmed_at=NOW() WHERE token=xxx
+    DB-->>API: 1 row
+    API->>PW: HTTP POST /email/send<br/>{template: 'welcome', to}
+    PW->>LOG: 写 "已发送 (mock) welcome 邮件" 日志
+    API-->>User: 200 {confirmed: true}
+
+%% =====================================================
+%% S5: launch_events → /webhook/launch 推送链路
+%% =====================================================
+sequenceDiagram
+    autonumber
+    participant CR as Crawler
+    participant DB as Supabase<br/>launch_events
+    participant TR as Trigger<br/>fn_launch_events_notify
+    participant PG as pg_net
+    participant PW as push-worker<br/>POST /webhook/launch
+    participant CH as push_channels
+    participant LOG as 推送日志
+
+    CR->>DB: INSERT launch_events<br/>(source='github', confidence=0.8)
+    DB->>TR: AFTER INSERT trigger
+    TR->>TR: 过滤条件<br/>event_type='launch'<br/>source IN (PH/HN/GitHub)<br/>confidence >= 0.6
+
+    alt 满足推送条件
+        TR->>PG: net.http_post(url, body)
+        PG-->>PW: HTTP POST /webhook/launch<br/>X-AI-Radar-Event-Id: uuid
+        PW->>PW: 验签 + 内存去重
+        PW->>CH: SELECT * FROM push_channels<br/>WHERE is_active=true<br/>AND notify_new_products=true
+        CH-->>PW: 5 users
+        PW->>LOG: 记录 5 个用户, channel_type=email
+        loop 每个用户
+            PW->>PW: 渲染邮件模板 (mock)
+            PW->>LOG: 写 "已发送 (mock)" 日志
+        end
+        PW-->>PG: 200 {received: true, dispatched_users: 5, latency_ms: 234}
+    else 不满足条件
+        TR-->>DB: 仅写入, 不推送
+    end
+    DB-->>CR: RETURNING id
+
+    Note over PW,LOG: 推送失败重试
+    PW->>PW: 第 1 次失败 → 30s 后重试
+    PW->>PW: 第 2 次失败 → 2min 后重试
+    PW->>PW: 第 3 次失败 → 5min 后重试
+    PW->>LOG: 写 "failed after 3 retries" 日志
+
+%% =====================================================
+%% S6: Plan 切换 + PaywallGate 触发
+%% =====================================================
+sequenceDiagram
+    autonumber
+    actor User as User (free)
+    participant Page as /trends 页
+    participant Gate as PaywallGate
+    participant Hook as usePlan() hook
+    participant API as /api/admin/plan
+    participant Pricing as /pricing 页
+    participant Switch as /api/admin/plan-switch
+    participant DB as user_profiles
+    participant Success as /subscription/success
+
+    User->>Page: 访问趋势曲线详情
+    Page->>Gate: <PaywallGate requires='pro' fallback={<UpgradeBanner />}>
+    Gate->>Hook: 调用 usePlan() (SWR 缓存 60s)
+    Hook->>API: GET /api/admin/plan
+    API->>DB: SELECT plan FROM user_profiles WHERE id=auth.uid()
+    DB-->>API: plan='free'
+    API-->>Hook: {plan: 'free', isPro: false}
+    Hook-->>Gate: {isPro: false}
+    Gate->>User: 显示 "立即升级" 弹窗 (Radix AlertDialog)
+
+    User->>Gate: 点击 "升级 Pro"
+    Gate->>Pricing: 跳转 /pricing
+    User->>Pricing: 点击 Pro 卡片 "立即订阅"
+    Pricing->>Switch: POST /api/admin/plan-switch<br/>{user_id, plan: 'pro'}
+    Switch->>DB: UPDATE user_profiles SET plan='pro' WHERE id=xxx
+    DB-->>Switch: 1 row
+    Switch-->>Pricing: {previous_plan: 'free', new_plan: 'pro'}
+    Pricing->>Success: redirect /subscription/success?plan=pro
+    Success-->>User: 显示成功页 + 当前 plan
+
+    User->>Page: 返回 /trends
+    Page->>Gate: <PaywallGate requires='pro'>
+    Gate->>Hook: usePlan() (SWR 自动刷新)
+    Hook-->>Gate: {isPro: true}
+    Gate-->>User: 渲染趋势曲线详情 (无弹窗)
+
+%% =====================================================
+%% S7: 4 个爬虫写入 launch_events
+%% =====================================================
+sequenceDiagram
+    autonumber
+    participant GHT as GitHub Trending
+    participant XT as X Keyword (mock)
+    participant ART as arXiv API
+    participant HFT as HuggingFace API
+    participant Crawler as crawler/src/sources/*
+    participant DB as launch_events
+
+    par 4 爬虫并行
+        GHT->>Crawler: GET github_trending.ts
+        Crawler->>GHT: HTTP request (HTML)
+        GHT-->>Crawler: trending repos HTML
+        Crawler->>Crawler: parse (name, stars, language)
+        Crawler->>DB: INSERT (source='github', event_type='launch')
+    and
+        XT->>Crawler: GET x_keyword.ts
+        Crawler->>XT: read mocks/x_keyword.json
+        XT-->>Crawler: 20 mock tweets
+        Crawler->>Crawler: parse via adapter
+        Crawler->>DB: INSERT (source='x', event_type='launch')
+    and
+        ART->>Crawler: GET arxiv.ts
+        Crawler->>ART: HTTP GET export.arxiv.org/api/query
+        ART-->>Crawler: Atom XML
+        Crawler->>Crawler: parse XML (title, authors, id)
+        Crawler->>DB: INSERT (source='arxiv', event_type='open_source')
+    and
+        HFT->>Crawler: GET huggingface.ts
+        Crawler->>HFT: HTTP GET api/models?sort=downloads
+        HFT-->>Crawler: JSON
+        Crawler->>Crawler: parse (id, downloads, likes)
+        Crawler->>DB: INSERT (source='huggingface', event_type='open_source')
+    end
+
+    Note over DB: 4 个源 INSERT 完成后<br/>trigger 触发推送链路 (见 S5)

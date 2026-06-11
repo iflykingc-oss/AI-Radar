@@ -1,0 +1,474 @@
+%% AI Radar Phase E — Class Diagram
+%% Author: 高见远 (Architect)
+%% Date: 2026-05-30
+%% Covers:
+%%   - 4 new tables: LaunchEvent, TrendSignal, Category, ProductSignal
+%%   - 1 new table: NewsletterSubscription
+%%   - 1 updated table: UserProfile (plan CHECK)
+%%   - 4 new crawlers: GitHubTrending, XKeyword, ArXiv, HuggingFace
+%%   - Frontend hooks/components: usePlan, PaywallGate, NewsletterForm
+%%   - API route handlers: NewsletterAPI, PricingAPI, AdminPlanAPI
+%%   - push-worker handler: LaunchWebhook
+%%   - DB triggers: launch_events_notify, trend_signals update
+
+classDiagram
+    %% ==================== 数据模型 ====================
+    class Product {
+        +UUID id
+        +String slug
+        +String name
+        +String category
+        +String[] tags
+        +Date launch_date
+        +String logo_url
+        +String website_url
+    }
+
+    class LaunchEvent {
+        +UUID id
+        +UUID product_id FK
+        +String source
+        +String source_url
+        +String source_id
+        +String event_type
+        +String title
+        +String body
+        +String author
+        +JSONB engagement
+        +DateTime detected_at
+        +DateTime event_at
+        +Float confidence
+        +JSONB raw_data
+        +DateTime created_at
+        +DateTime updated_at
+        +bool shouldNotify()$
+        +UUID dedupBy(source, source_id)$
+    }
+
+    class TrendSignal {
+        +UUID id
+        +String signal_type
+        +String scope
+        +String title
+        +String description
+        +JSONB evidence
+        +Float strength
+        +Float velocity
+        +Float novelty
+        +DateTime first_seen
+        +DateTime last_updated
+        +String status
+        +int product_count
+        +bool isActive()$
+    }
+
+    class Category {
+        +UUID id
+        +String slug
+        +String name_en
+        +String name_zh
+        +String description
+        +UUID parent_id FK
+        +int product_count
+        +Float hot_score
+        +int display_order
+        +String icon
+    }
+
+    class ProductSignal {
+        +UUID product_id PK,FK
+        +UUID signal_id PK,FK
+        +Float relevance
+        +DateTime created_at
+    }
+
+    class UserProfile {
+        +UUID id
+        +String email
+        +String display_name
+        +String role
+        +String plan
+        +String[] interest_tags
+        +DateTime created_at
+        +DateTime updated_at
+        +bool isPro()$
+        +bool isEnterprise()$
+    }
+
+    class NewsletterSubscription {
+        +UUID id
+        +String email
+        +String frequency
+        +String language
+        +DateTime confirmed_at
+        +DateTime unsubscribed_at
+        +String confirmation_token
+        +String unsubscribe_token
+        +String source
+        +String ip_hash
+        +DateTime created_at
+        +bool isActive()$
+        +String generateToken()$
+    }
+
+    class WatchlistItem {
+        +UUID id
+        +UUID user_id FK
+        +UUID product_id FK
+        +DateTime added_at
+    }
+
+    class PushChannel {
+        +UUID id
+        +UUID user_id FK
+        +String channel_type
+        +String webhook_url
+        +bool is_active
+        +bool notify_new_products
+    }
+
+    %% ==================== 关系 ====================
+    Product "1" --> "0..*" LaunchEvent : has events
+    Product "1" --> "0..*" ProductSignal : tagged in
+    TrendSignal "1" --> "0..*" ProductSignal : aggregates
+    Category "0..1" --> "0..*" Category : parent of
+    Product "0..*" --> "0..1" Category : belongs to (via string)
+    UserProfile "1" --> "0..*" WatchlistItem : watches
+    UserProfile "1" --> "0..*" PushChannel : configures
+    UserProfile "1" --> "0..1" NewsletterSubscription : "soft link via email"
+
+    %% ==================== 前端 Hook / 组件 ====================
+    class usePlan {
+        <<hook>>
+        +String plan
+        +bool isPro
+        +bool isEnterprise
+        +bool isLoading
+        +Function refresh()
+        +usePlan()$
+    }
+
+    class PaywallGate {
+        <<component>>
+        -String requires
+        -ReactNode fallback
+        -ReactNode children
+        +render() ReactNode
+        -checkPlan(plan) bool
+        -showUpgradeDialog() void
+    }
+
+    class NewsletterForm {
+        <<component>>
+        -String source
+        -String defaultFrequency
+        -String email
+        -String frequency
+        -String language
+        -bool isLoading
+        -String error
+        +handleSubmit() Promise
+        +render() ReactNode
+    }
+
+    class LaunchTimeline {
+        <<component>>
+        -LaunchEvent[] items
+        -String source
+        -String range
+        -int page
+        -bool isLoading
+        +loadMore() Promise
+        +setFilter(source, range) void
+    }
+
+    class LaunchCard {
+        <<component>>
+        -LaunchEvent event
+        -Function onClick
+        +render() ReactNode
+    }
+
+    class LaunchDetailDrawer {
+        <<component>>
+        -LaunchEvent event
+        -bool isOpen
+        +open(event) void
+        +close() void
+        +render() ReactNode
+    }
+
+    class LaunchFilterPanel {
+        <<component>>
+        -String[] sources
+        -String[] eventTypes
+        -String range
+        +apply() void
+        +reset() void
+    }
+
+    class TrendWordCloud {
+        <<component>>
+        -TrendSignal[] signals
+        -String lang
+        +render() SVG
+    }
+
+    class TrendSignalCard {
+        <<component>>
+        -TrendSignal signal
+        +render() ReactNode
+    }
+
+    class TrendTop20 {
+        <<component>>
+        -TrendSignal[] items
+        +render() ReactNode
+    }
+
+    class HomeEntryCard {
+        <<component>>
+        -String title
+        -String description
+        -String href
+        -String icon
+        -String stats
+        +render() ReactNode
+    }
+
+    class NewLaunchesCarousel {
+        <<component>>
+        -LaunchEvent[] items
+        +render() ReactNode
+    }
+
+    %% ==================== API 路由 ====================
+    class LaunchesAPI {
+        <<Next.js Route>>
+        +GET(request) Response
+        -validateQuery(q) Object
+        -queryDB(filters) Array
+    }
+
+    class LaunchDetailAPI {
+        <<Next.js Route>>
+        +GET(request, id) Response
+        -getById(id) LaunchEvent
+    }
+
+    class LaunchCreateAPI {
+        <<Next.js Route>>
+        +POST(request) Response
+        -validateServiceRole(token) bool
+        -insertOrDedup(body) UUID
+    }
+
+    class TrendsAPI {
+        <<Next.js Route>>
+        +GET(request) Response
+        -validateQuery(q) Object
+        -queryDB(filters) Array
+    }
+
+    class TrendDetailAPI {
+        <<Next.js Route>>
+        +GET(request, id) Response
+        -getWithProducts(id) Object
+    }
+
+    class CategoriesAPI {
+        <<Next.js Route>>
+        +GET(request) Response
+    }
+
+    class ProductSignalsAPI {
+        <<Next.js Route>>
+        +GET(request, productId) Response
+    }
+
+    class NewsletterSubscribeAPI {
+        <<Next.js Route>>
+        +POST(request) Response
+        -validateEmail(email) bool
+        -checkDuplicate(email) bool
+        -insert(body) UUID
+        -triggerConfirmEmail(sub) void
+    }
+
+    class NewsletterConfirmAPI {
+        <<Next.js Route>>
+        +GET(request) Response
+        -markConfirmed(token) void
+    }
+
+    class PricingAPI {
+        <<Next.js Route>>
+        +GET(request) Response
+    }
+
+    class AdminPlanSwitchAPI {
+        <<Next.js Route>>
+        +POST(request) Response
+        -validateServiceRole(token) bool
+        -updatePlan(userId, plan) void
+    }
+
+    class AdminPlanGetAPI {
+        <<Next.js Route>>
+        +GET(request) Response
+        -getCurrentUserPlan() String
+    }
+
+    class LaunchWebhook {
+        <<push-worker route>>
+        +POST(request) Response
+        -verifySignature(headers) bool
+        -deduplicateEvent(eventId) bool
+        -fetchActiveUsers() Array
+        -dispatchToChannels(users, event) void
+    }
+
+    %% ==================== 爬虫 ====================
+    class GitHubTrendingCrawler {
+        <<crawler source>>
+        -String language
+        -String since
+        +fetch() Promise~LaunchEvent[]~
+        -parseHTML(html) Array
+        -computeConfidence(stars) Float
+    }
+
+    class XKeywordCrawler {
+        <<crawler source>>
+        -String[] keywords
+        -XAdapter adapter
+        +fetch() Promise~LaunchEvent[]~
+        -loadMock() Array
+    }
+
+    class XAdapter {
+        <<interface>>
+        +fetchTweets(keyword) Promise~Tweet[]~
+    }
+
+    class MockXAdapter {
+        <<implementation>>
+        -String mockFilePath
+        +fetchTweets(keyword) Array
+    }
+
+    class ArXivCrawler {
+        <<crawler source>>
+        -String[] categories
+        -int maxResults
+        +fetch() Promise~LaunchEvent[]~
+        -parseXML(xml) Array
+    }
+
+    class HuggingFaceCrawler {
+        <<crawler source>>
+        -String sortBy
+        -int limit
+        +fetch() Promise~LaunchEvent[]~
+        -parseJSON(json) Array
+    }
+
+    %% ==================== 触发器 ====================
+    class LaunchEventsNotifyTrigger {
+        <<DB Trigger>>
+        -fn_launch_events_notify_push_worker()
+        -BEFORE: INSERT
+        -AFTER: pg_net.http_post
+        -condition: confidence >= 0.6 AND event_type='launch'
+    }
+
+    class TrendSignalsUpdatedTrigger {
+        <<DB Trigger>>
+        -trg_categories_updated_at (继承自 products)
+        -BEFORE: UPDATE
+        -AFTER: set last_updated = NOW()
+    }
+
+    %% ==================== 邮件模板 ====================
+    class EmailRenderer {
+        <<push-worker service>>
+        -String templateName
+        -Object vars
+        +render() String
+        -compileTemplate(name) Function
+    }
+
+    class SubscriptionConfirmTemplate {
+        <<HTML template>>
+        -String to
+        -String confirmUrl
+        -String unsubscribeUrl
+        +render() String
+    }
+
+    class RenewalReminderTemplate {
+        <<HTML template>>
+        -String to
+        -String plan
+        -DateTime expiresAt
+        -String renewUrl
+        +render() String
+    }
+
+    class WeeklyDigestTemplate {
+        <<HTML template>>
+        -String to
+        -LaunchEvent[] topLaunches
+        -TrendSignal[] topTrends
+        +render() String
+    }
+
+    %% ==================== 关联 ====================
+    LaunchesAPI ..> LaunchEvent : queries
+    LaunchDetailAPI ..> LaunchEvent : queries
+    LaunchCreateAPI ..> LaunchEvent : writes
+    TrendsAPI ..> TrendSignal : queries
+    TrendDetailAPI ..> TrendSignal : queries
+    TrendDetailAPI ..> ProductSignal : joins
+    CategoriesAPI ..> Category : queries
+    ProductSignalsAPI ..> ProductSignal : queries
+    NewsletterSubscribeAPI ..> NewsletterSubscription : writes
+    NewsletterConfirmAPI ..> NewsletterSubscription : updates
+    PricingAPI ..> UserProfile : "reads plan"
+    AdminPlanSwitchAPI ..> UserProfile : updates plan
+    AdminPlanGetAPI ..> UserProfile : reads
+
+    usePlan ..> AdminPlanGetAPI : calls
+    usePlan ..> UserProfile : observes
+    PaywallGate ..> usePlan : uses
+    NewsletterForm ..> NewsletterSubscribeAPI : calls
+
+    LaunchTimeline ..> LaunchesAPI : fetches
+    LaunchCard ..> LaunchEvent : renders
+    LaunchDetailDrawer ..> LaunchDetailAPI : fetches
+    LaunchFilterPanel ..> LaunchesAPI : filters
+
+    TrendWordCloud ..> TrendSignal : renders
+    TrendSignalCard ..> TrendSignal : renders
+    TrendTop20 ..> TrendSignal : renders
+    HomeEntryCard ..> Product : links
+    NewLaunchesCarousel ..> LaunchEvent : renders
+
+    GitHubTrendingCrawler ..> LaunchCreateAPI : "POST (via service_role)"
+    XKeywordCrawler ..> LaunchCreateAPI : "POST (via service_role)"
+    ArXivCrawler ..> LaunchCreateAPI : "POST (via service_role)"
+    HuggingFaceCrawler ..> LaunchCreateAPI : "POST (via service_role)"
+
+    XKeywordCrawler --> XAdapter : uses
+    MockXAdapter ..|> XAdapter : implements
+
+    LaunchEvent --> LaunchEventsNotifyTrigger : triggers
+    TrendSignal --> TrendSignalsUpdatedTrigger : triggers
+    LaunchEventsNotifyTrigger ..> LaunchWebhook : HTTP POST
+    LaunchWebhook ..> EmailRenderer : dispatches
+    EmailRenderer --> SubscriptionConfirmTemplate : renders
+    EmailRenderer --> RenewalReminderTemplate : renders
+    EmailRenderer --> WeeklyDigestTemplate : renders
+    NewsletterSubscribeAPI ..> EmailRenderer : triggers
+    NewsletterConfirmAPI ..> EmailRenderer : triggers
+    LaunchWebhook ..> EmailRenderer : triggers

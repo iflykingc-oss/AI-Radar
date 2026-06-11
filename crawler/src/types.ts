@@ -27,7 +27,7 @@ export interface CrawledProduct {
   /** High-level category (e.g. "LLM", "Image Generation", "Dev Tools") */
   category: string;
   /** Which data source discovered this product */
-  source: 'producthunt' | 'github' | 'hackernews' | 'rss';
+  source: 'producthunt' | 'github' | 'hackernews' | 'rss' | 'huggingface' | 'arxiv';
   /** Original URL where the product was found */
   source_url: string;
   /** ISO timestamp of when this record was crawled */
@@ -75,3 +75,18 @@ export interface ProductRow extends CrawledProduct {
   created_at?: string;
   updated_at?: string;
 }
+
+/**
+ * All sources currently registered in the crawler.
+ * Used for health checks and dashboards.
+ */
+export const REGISTERED_SOURCES = [
+  'producthunt',
+  'github',
+  'hackernews',
+  'rss',
+  'huggingface',
+  'arxiv',
+] as const;
+
+export type RegisteredSource = (typeof REGISTERED_SOURCES)[number];

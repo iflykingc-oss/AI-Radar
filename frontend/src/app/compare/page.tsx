@@ -200,9 +200,9 @@ export default function ComparePage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">{t('title')}</h1>
-        <div className="flex items-center gap-2">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{t('title')}</h1>
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setSearchOpen(true)}>
             <Search className="mr-2 h-4 w-4" /> {t('add_product')}
           </Button>
@@ -221,8 +221,8 @@ export default function ComparePage() {
 
       {/* Search Modal */}
       {searchOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-start justify-center pt-20">
-          <div className="bg-background rounded-lg shadow-xl w-full max-w-lg p-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-4 pt-16 sm:pt-20">
+          <div className="w-full max-w-lg rounded-lg bg-background p-4 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold">{t('search_modal_title') || t('search_products')}</h3>
               <button onClick={() => setSearchOpen(false)}>
@@ -304,18 +304,35 @@ export default function ComparePage() {
 
       {/* Comparison Table */}
       {products.length === 0 ? (
-        <Card>
-          <CardContent className="py-20 text-center">
-            <p className="text-lg text-muted-foreground mb-4">
+        <Card data-testid="compare-empty-guide" data-legacy-testid="compare-empty">
+          <CardContent className="py-16 text-center">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Search className="h-7 w-7" />
+            </div>
+            <h2 className="text-2xl font-semibold text-foreground">
+              {t('empty_title')}
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
               {t('empty_desc')}
             </p>
-            <Button onClick={() => setSearchOpen(true)}>
+            <div className="mx-auto mt-5 grid max-w-2xl gap-3 text-left text-sm text-muted-foreground sm:grid-cols-3">
+              <div className="rounded-lg border bg-card/50 p-3">
+                <span className="font-medium text-foreground">1.</span> {t('guide_step_search')}
+              </div>
+              <div className="rounded-lg border bg-card/50 p-3">
+                <span className="font-medium text-foreground">2.</span> {t('guide_step_select')}
+              </div>
+              <div className="rounded-lg border bg-card/50 p-3">
+                <span className="font-medium text-foreground">3.</span> {t('guide_step_compare')}
+              </div>
+            </div>
+            <Button className="mt-6" onClick={() => setSearchOpen(true)}>
               <Search className="mr-2 h-4 w-4" /> {t('empty_btn') || t('add_product')}
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" data-testid="compare-table">
           <table className="w-full border-collapse">
             <thead>
               <tr>

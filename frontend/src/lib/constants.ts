@@ -1,3 +1,25 @@
+/**
+ * @file Legacy static constants for the AI Radar frontend.
+ *
+ * @deprecated This file is being phased out in favour of API-driven
+ * data sources. New code should fetch from the relevant `/api/*` route
+ * instead. See:
+ *   - `/api/categories`   (replaces `CATEGORIES`)
+ *   - `/api/products?pricing=` (replaces `PRICING_MODELS` filter chips)
+ *   - `/api/regions`      (replaces `REGIONS` — TBD)
+ *   - `/api/pricing-tiers` (replaces `PRICING_TIERS` — TBD)
+ *   - `/api/faq`          (replaces `FAQ_DATA` — TBD)
+ *
+ * Kept temporarily for back-compat (landing page, pricing block). Will be
+ * removed once consumers migrate. Last updated: 2026-05-29 (T-2 P0).
+ */
+
+/**
+ * Static list of AI product categories.
+ *
+ * @deprecated Use `/api/categories` as the source of truth. Kept for
+ * back-compat only — the `/discover` page no longer imports this.
+ */
 export const CATEGORIES = [
   'AI Writing',
   'AI Coding',
@@ -13,6 +35,11 @@ export const CATEGORIES = [
   'AI Marketing',
 ] as const;
 
+/**
+ * Static list of geographic regions.
+ *
+ * @deprecated Use `/api/regions` once the regions endpoint ships.
+ */
 export const REGIONS = [
   'Global',
   'North America',
@@ -23,6 +50,13 @@ export const REGIONS = [
   'Latin America',
 ] as const;
 
+/**
+ * Static list of pricing models.
+ *
+ * @deprecated Use the `pricing` filter on `/api/products?pricing=`.
+ * The `pricing_models.{free|freemium|paid|open_source}` i18n keys in
+ * `messages/{en,zh}.json` are the canonical source for display labels.
+ */
 export const PRICING_MODELS = [
   'free',
   'freemium',
@@ -30,6 +64,12 @@ export const PRICING_MODELS = [
   'open_source',
 ] as const;
 
+/**
+ * Static pricing tier copy used by the landing page.
+ *
+ * @deprecated Migrate to `/api/pricing-tiers` once the endpoint ships.
+ * Kept for back-compat with the landing page pricing block.
+ */
 export const PRICING_TIERS = [
   {
     name: 'Free',
@@ -93,6 +133,12 @@ export const PRICING_TIERS = [
   },
 ];
 
+/**
+ * Static FAQ copy used by the landing page.
+ *
+ * @deprecated Migrate to `/api/faq` once the endpoint ships.
+ * Kept for back-compat with the landing page FAQ block.
+ */
 export const FAQ_DATA = [
   {
     question: 'What is AI Radar?',

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import type { HuggingFaceModel, HuggingFaceApiModel, HuggingFaceApiResponse } from '@/types/huggingface';
 

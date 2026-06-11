@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { LoginModal } from '@/components/auth/LoginModal';
-import { Menu, X } from 'lucide-react';
+import { Menu, Radar, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle, LanguageSwitcher } from './LanguageSwitcher';
 
@@ -28,11 +28,16 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
+        <Link href="/" className="flex min-w-0 items-center space-x-2">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
             AI
           </div>
-          <span className="text-xl font-bold tracking-tight">AI Radar</span>
+          <div className="min-w-0">
+            <span className="block text-lg font-bold tracking-tight sm:text-xl">AI Radar</span>
+            <span className="hidden text-[10px] leading-none text-muted-foreground lg:block">
+              Product radar · launches · trends
+            </span>
+          </div>
         </Link>
 
         {/* Desktop Nav */}
@@ -58,8 +63,11 @@ export default function Navbar() {
           <Button variant="ghost" size="sm" onClick={() => setLoginOpen(true)}>
             {t('login')}
           </Button>
-          <Button size="sm" onClick={() => setLoginOpen(true)}>
-            {t('signup')}
+          <Button size="sm" asChild>
+            <Link href="/launches?range=24h" className="gap-1">
+              <Radar className="h-3.5 w-3.5" />
+              新品雷达
+            </Link>
           </Button>
         </div>
 
@@ -92,8 +100,8 @@ export default function Navbar() {
             <Button variant="outline" onClick={() => { setLoginOpen(true); setMobileMenuOpen(false); }}>
               {t('login')}
             </Button>
-            <Button onClick={() => { setLoginOpen(true); setMobileMenuOpen(false); }}>
-              {t('signup')}
+            <Button asChild onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/launches?range=24h">新品雷达</Link>
             </Button>
           </div>
         </div>

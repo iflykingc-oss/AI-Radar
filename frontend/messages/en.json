@@ -10,9 +10,9 @@
     "sign_out": "Sign out"
   },
   "home": {
-    "welcome": "Welcome back!",
-    "digest": "Here's your personalized AI product digest for today.",
-    "browse_all": "Browse All",
+    "welcome": "See where AI products are moving",
+    "digest": "Daily launches, mature categories, and trend signals for developers, investors, and enterprise innovation teams.",
+    "browse_all": "Browse product radar",
     "notifications": "Notifications",
     "recommended": "Recommended for You",
     "recent": "Recently Added",
@@ -21,10 +21,110 @@
     "new_today": "New Today",
     "products_discovered": "Products discovered",
     "alerts": "Alerts",
-    "unread": "Unread notifications"
+    "unread": "Unread notifications",
+    "layers": {
+      "section_title_zh": "从产品、发布到趋势，一站看清 AI 行业动向",
+      "section_title_en": "Three layers of AI product intelligence",
+      "section_subtitle_zh": "成熟赛道 · 每日新发布 · 趋势方向 — 帮开发者选型、创投找机会、企业创新团队做扫描。",
+      "section_subtitle_en": "Mature categories, daily launches, and emerging trends for developer decisions, investment sourcing, and enterprise innovation scans.",
+      "l1": {
+        "title_zh": "成熟赛道",
+        "title_en": "Mature Categories",
+        "desc_zh": "按品类查看已被市场验证的 AI 产品，快速判断赛道格局。",
+        "desc_en": "Browse market-validated AI products by category and quickly understand the competitive landscape.",
+        "cta_zh": "浏览全部分类",
+        "cta_en": "Browse all categories",
+        "unit_zh": "个赛道",
+        "unit_en": "categories"
+      },
+      "l2": {
+        "title_zh": "每日新发布",
+        "title_en": "Daily Launches",
+        "desc_zh": "追踪过去 24 小时跨平台新上线的 AI 产品，减少漏看。",
+        "desc_en": "Track new AI products launched across platforms in the last 24 hours so fewer signals slip by.",
+        "cta_zh": "查看新发布雷达",
+        "cta_en": "View the launch radar",
+        "unit_zh": "条新发布",
+        "unit_en": "launches"
+      },
+      "l3": {
+        "title_zh": "趋势方向",
+        "title_en": "Emerging Trends",
+        "desc_zh": "基于多源信号识别正在升温的产品方向与技术主题。",
+        "desc_en": "Detect heating-up product directions and technical themes from multi-source signals.",
+        "cta_zh": "探索趋势图谱",
+        "cta_en": "Explore the trend map",
+        "unit_zh": "个信号",
+        "unit_en": "signals"
+      }
+    }
+  },
+  "paywall": {
+    "feature_label": {
+      "watchlist": "Watchlist",
+      "comparison": "Product Comparison"
+    },
+    "feature": {
+      "watchlist": {
+        "label": "Watchlist",
+        "title": "Watchlist is a Pro feature",
+        "body": "Upgrade to {plan} to save and track your favorite AI products.",
+        "cta": "Upgrade to unlock",
+        "description": "Save AI products to a personal shortlist and get alerts when they update."
+      },
+      "comparison": {
+        "label": "Product Comparison",
+        "title": "Product Comparison is a Pro feature",
+        "body": "Upgrade to {plan} to put any two AI products side by side.",
+        "cta": "Upgrade to unlock",
+        "description": "Side-by-side feature and pricing comparison across the catalogue."
+      },
+      "trends_advanced": {
+        "label": "Advanced Trend Insights",
+        "title": "Advanced Trend Insights is a Pro feature",
+        "body": "Upgrade to {plan} to unlock deeper signal graphs and forecasts.",
+        "cta": "Upgrade to unlock",
+        "description": "7-day and 30-day rolling trend lines, signal heatmaps, and short-term forecasts."
+      },
+      "newsletter_daily": {
+        "label": "Daily Newsletter",
+        "title": "Daily Newsletter is a Pro feature",
+        "body": "Upgrade to {plan} to receive the daily AI product digest.",
+        "cta": "Upgrade to unlock",
+        "description": "A curated daily digest of new launches, fundraising, and momentum signals."
+      },
+      "api_access": {
+        "label": "API Access",
+        "title": "API Access is a Pro feature",
+        "body": "Upgrade to {plan} to query the AI Radar API from your own tools.",
+        "cta": "Upgrade to unlock",
+        "description": "Programmatic access to products, trends, and watchlist endpoints."
+      },
+      "team_collaboration": {
+        "label": "Team Collaboration",
+        "title": "Team Collaboration is a Pro feature",
+        "body": "Upgrade to {plan} to share shortlists and notes with your team.",
+        "cta": "Upgrade to unlock",
+        "description": "Shared shortlists, annotations, and Slack integrations for your team."
+      }
+    },
+    "locked_title": "This feature is available on a paid plan",
+    "upgrade_button": "Upgrade to unlock",
+    "dialog_title": "Unlock the full AI product intelligence",
+    "dialog_desc": "Upgrade to Starter or higher to use Watchlist, Comparison, daily newsletter, and more.",
+    "current_plan": "Current plan",
+    "see_full_pricing": "See full plan comparison →",
+    "maybe_later": "Maybe later",
+    "required_badge": "Required",
+    "pro_badge": "Pro Feature",
+    "placeholder_loading": "Data syncing…"
   },
   "discover": {
     "title": "Discover AI Products",
+    "subtitle": "Browse AI products by category, validated by the market.",
+    "browse_categories": "Browse AI products by category, validated by the market.",
+    "categories_found": "{count} categories found",
+    "categories_heading": "Categories",
     "search_placeholder": "Search AI products...",
     "filters": "Filters",
     "clear_all": "Clear all",
@@ -34,7 +134,16 @@
     "loading": "Loading...",
     "no_results": "No products found matching your criteria",
     "clear_filters": "Clear all filters",
-    "failed_to_load": "Failed to load products. Please try again."
+    "failed_to_load": "Failed to load products. Please try again.",
+    "browse_all": "Browse all",
+    "layer_mature": "Mature",
+    "layer_emerging": "Emerging",
+    "layer_all": "All layers",
+    "filter_summary_active": "Showing filtered results. Clear filters to recover the full list.",
+    "filter_summary_default": "Showing the default mature category view.",
+    "no_categories": "No categories found",
+    "no_results_help": "Your current filters may be too narrow. Clear them to return to the full category list.",
+    "no_categories_help": "Category data is still syncing. Try the launch radar or return later."
   },
   "watchlist": {
     "title": "My Watchlist",
@@ -44,7 +153,7 @@
     "active": "Active",
     "changes": "Recent Changes",
     "empty_title": "Your watchlist is empty",
-    "empty_desc": "Start tracking AI products to get updates when they change.",
+    "empty_desc": "Save products you care about, track updates, and compare them when you are ready.",
     "discover_products": "Discover Products",
     "failed_to_load": "Failed to load your watchlist. Please try again.",
     "no_recent_changes": "No recent changes to tracked products."
@@ -55,8 +164,17 @@
     "export": "Export",
     "search_placeholder": "Search products...",
     "search_modal_title": "Add Product to Compare",
-    "empty_desc": "Select 2-5 products to compare",
+    "empty_title": "Start a focused product comparison",
+    "empty_desc": "Search and add 2-5 AI products to compare category, pricing, confidence, status, tech stack, and recent activity side by side.",
     "empty_btn": "Add Products",
+    "guide_step_search": "Search the catalog by product name or category.",
+    "guide_step_select": "Select 2-5 products that solve the same job.",
+    "guide_step_compare": "Review differences, highlight gaps, and export when ready.",
+    "copy_link": "Copy link",
+    "na": "N/A",
+    "radar_confidence": "Confidence",
+    "radar_github_stars": "GitHub Stars",
+    "radar_growth_rate": "Growth Rate",
     "dimension_name": "Name",
     "dimension_category": "Category",
     "dimension_description": "Description",
@@ -77,11 +195,72 @@
     "rising": "Rising",
     "falling": "Falling",
     "stable": "Stable",
+    "no_rising": "No rising products in this period.",
     "no_falling": "No falling products in this period.",
+    "no_stable": "No stable products in this period.",
     "stable_desc": "Stable products will appear here.",
-    "this_week": "this week"
+    "this_week": "this week",
+    "chart_title": "Trend Overview",
+    "chart_description": "Product trend changes over the selected time period",
+    "rankings_heading": "Trend rankings",
+    "strength": "Strength",
+    "velocity": "Velocity",
+    "products": "products",
+    "why_it_matters": "Why it matters",
+    "why_products": "{count} products",
+    "why_multiple_sources": "multiple sources",
+    "why_rising": "Worth watching because strength is {strength}, velocity is +{velocity}, and {productSignal} are already connected to this signal.",
+    "why_falling": "Worth reviewing because the signal is {status}; check whether momentum is fading before committing resources.",
+    "why_stable": "Worth monitoring because the signal is visible but not yet accelerating; use it as an early benchmark for adjacent categories.",
+    "range_7d": "7d",
+    "range_30d": "30d",
+    "range_90d": "90d",
+    "range_7d_tooltip": "Trends from the last 7 days",
+    "range_30d_tooltip": "Trends from the last 30 days",
+    "range_90d_tooltip": "Trends from the last 90 days",
+    "pro_required": "Pro plan required — coming soon",
+    "advanced_locked": "Pro only",
+    "no_signals": "No trend signals available for the selected range"
+  },
+  "launches": {
+    "page_title": "New Launches",
+    "subtitle_zh": "过去 24 小时的 AI 新品",
+    "subtitle_en": "AI launches in the past 24h",
+    "range": {
+      "24h": "Last 24h",
+      "7d": "Last 7d",
+      "30d": "Last 30d",
+      "90d": "Last 90d"
+    },
+    "empty_zh": "暂无新品，试试切换时间范围",
+    "empty_en": "No launches yet. Try a different range.",
+    "error_zh": "加载失败，请稍后重试",
+    "error_en": "Failed to load. Please try again.",
+    "pagination": {
+      "prev": "Previous",
+      "next": "Next",
+      "page": "Page {n}",
+      "showing": "Showing {from}–{to} of {total}"
+    },
+    "filter": {
+      "category_label": "Category",
+      "all": "All",
+      "source_label": "Source"
+    },
+    "card": {
+      "source_label": "Source",
+      "confidence_label": "Confidence",
+      "view_product": "View product",
+      "view_source": "View source"
+    }
   },
   "landing": {
+    "nav": {
+      "discover": "Discover",
+      "watchlist": "Watchlist",
+      "compare": "Compare",
+      "trends": "Trends"
+    },
     "hero_badge": "Track 200+ new AI products daily",
     "hero_title_1": "Discover the world's",
     "hero_title_2": "most innovative AI products",
@@ -273,7 +452,10 @@
     "retry": "Retry",
     "details": "Details",
     "uncategorized": "Uncategorized",
-    "no_description": "No description available"
+    "no_description": "No description available",
+    "last_7_days": "Last 7 days",
+    "last_30_days": "Last 30 days",
+    "last_90_days": "Last 90 days"
   },
   "product_detail": {
     "back_to_discover": "Back to Discover",
@@ -336,5 +518,37 @@
     "saving": "Saving...",
     "save_success": "Channels saved successfully",
     "save_error": "Failed to save channels"
+  },
+  "newsletter": {
+    "footer_title": "Newsletter",
+    "footer_description": "Get a curated weekly digest of new AI products and trends, delivered to your inbox.",
+    "inline_title": "Subscribe to the AI Radar newsletter",
+    "inline_description": "Get a curated weekly digest of new AI products and trends. Daily digests are available on paid plans.",
+    "email_label": "Email address",
+    "email_placeholder": "you@example.com",
+    "frequency_label": "How often?",
+    "frequency_weekly": "Weekly",
+    "frequency_weekly_desc": "Every Monday morning.",
+    "frequency_daily": "Daily",
+    "frequency_daily_desc": "Every weekday morning.",
+    "frequency_daily_locked": "Starter",
+    "submit_button": "Subscribe",
+    "submitting": "Subscribing…",
+    "success_title": "Check your inbox",
+    "success_description": "We sent a confirmation link to your email. Click it to start receiving the newsletter.",
+    "error_invalid_email": "Please enter a valid email address.",
+    "error_already_subscribed": "This email is already subscribed — check your inbox for the latest digest.",
+    "error_rate_limit_title": "Slow down a moment",
+    "error_rate_limit": "Please wait {seconds}s before trying again.",
+    "error_server": "Something went wrong on our end. Please try again later.",
+    "error_network": "Network error. Please check your connection and try again.",
+    "paywall_badge": "Pro feature",
+    "paywall_title": "Daily digests are a Starter feature",
+    "paywall_description": "Upgrade to Starter or higher to receive the daily digest. Weekly digests are free for everyone.",
+    "paywall_cta": "See plans",
+    "paywall_dismiss": "Maybe later",
+    "privacy_notice": "By subscribing you agree to our privacy policy. Unsubscribe any time.",
+    "confirmed_title": "Subscription confirmed",
+    "confirmed_description": "Thanks for subscribing to the AI Radar newsletter."
   }
 }

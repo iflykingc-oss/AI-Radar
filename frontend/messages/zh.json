@@ -10,9 +10,9 @@
     "sign_out": "退出登录"
   },
   "home": {
-    "welcome": "欢迎回来！",
-    "digest": "这是您今天的个性化 AI 产品摘要。",
-    "browse_all": "浏览全部",
+    "welcome": "看清 AI 产品正在往哪走",
+    "digest": "为开发者、创投机构和企业创新团队聚合每日新品、成熟赛道与趋势信号。",
+    "browse_all": "浏览产品雷达",
     "notifications": "通知",
     "recommended": "为您推荐",
     "recent": "最近新增",
@@ -21,10 +21,110 @@
     "new_today": "今日新增",
     "products_discovered": "已发现产品",
     "alerts": "提醒",
-    "unread": "未读通知"
+    "unread": "未读通知",
+    "layers": {
+      "section_title_zh": "从产品、发布到趋势，一站看清 AI 行业动向",
+      "section_title_en": "Three layers of AI product intelligence",
+      "section_subtitle_zh": "成熟赛道 · 每日新发布 · 趋势方向 — 帮开发者选型、创投找机会、企业创新团队做扫描。",
+      "section_subtitle_en": "Mature categories, daily launches, and emerging trends — complementary, not interchangeable.",
+      "l1": {
+        "title_zh": "成熟赛道",
+        "title_en": "Mature Categories",
+        "desc_zh": "按品类查看已被市场验证的 AI 产品，快速判断赛道格局。",
+        "desc_en": "Browse AI products validated by the market, organised by category.",
+        "cta_zh": "浏览全部分类",
+        "cta_en": "Browse all categories",
+        "unit_zh": "个赛道",
+        "unit_en": "categories"
+      },
+      "l2": {
+        "title_zh": "每日新发布",
+        "title_en": "Daily Launches",
+        "desc_zh": "追踪过去 24 小时跨平台新上线的 AI 产品，减少漏看。",
+        "desc_en": "New AI products launched across platforms in the last 24 hours.",
+        "cta_zh": "查看新发布雷达",
+        "cta_en": "View the launch radar",
+        "unit_zh": "条新发布",
+        "unit_en": "launches"
+      },
+      "l3": {
+        "title_zh": "趋势方向",
+        "title_en": "Emerging Trends",
+        "desc_zh": "基于多源信号识别正在升温的产品方向与技术主题。",
+        "desc_en": "Heating-up technology directions detected across multiple data sources.",
+        "cta_zh": "探索趋势图谱",
+        "cta_en": "Explore the trend map",
+        "unit_zh": "个信号",
+        "unit_en": "signals"
+      }
+    }
+  },
+  "paywall": {
+    "feature_label": {
+      "watchlist": "关注列表",
+      "comparison": "产品对比"
+    },
+    "feature": {
+      "watchlist": {
+        "label": "关注列表",
+        "title": "关注列表为付费功能",
+        "body": "升级到 {plan} 即可保存并追踪你最关注的 AI 产品。",
+        "cta": "升级解锁",
+        "description": "把 AI 产品加入个人关注列表，并在它们更新时获得提醒。"
+      },
+      "comparison": {
+        "label": "产品对比",
+        "title": "产品对比为付费功能",
+        "body": "升级到 {plan} 即可把任意两个 AI 产品并排对比。",
+        "cta": "升级解锁",
+        "description": "对产品目录中的功能、定价、口碑做并排对比。"
+      },
+      "trends_advanced": {
+        "label": "高级趋势洞察",
+        "title": "高级趋势洞察为付费功能",
+        "body": "升级到 {plan} 即可解锁更细的趋势图与预测。",
+        "cta": "升级解锁",
+        "description": "7 天 / 30 天滚动趋势线、信号热力图与短期预测。"
+      },
+      "newsletter_daily": {
+        "label": "每日邮件订阅",
+        "title": "每日邮件订阅为付费功能",
+        "body": "升级到 {plan} 即可收到每日 AI 产品快报。",
+        "cta": "升级解锁",
+        "description": "精选每日 AI 产品发布、融资与热度信号汇总。"
+      },
+      "api_access": {
+        "label": "API 访问",
+        "title": "API 访问为付费功能",
+        "body": "升级到 {plan} 即可通过自己的工具调用 AI Radar API。",
+        "cta": "升级解锁",
+        "description": "对产品、趋势、关注列表等接口的编程访问能力。"
+      },
+      "team_collaboration": {
+        "label": "团队协作",
+        "title": "团队协作为付费功能",
+        "body": "升级到 {plan} 即可与团队共享关注列表与笔记。",
+        "cta": "升级解锁",
+        "description": "共享关注列表、批注与 Slack 集成等团队功能。"
+      }
+    },
+    "locked_title": "此功能为付费方案专享",
+    "upgrade_button": "升级解锁",
+    "dialog_title": "解锁全部 AI 产品情报",
+    "dialog_desc": "升级到 Starter 或更高方案，即可使用关注列表、产品对比、每日邮件等完整功能。",
+    "current_plan": "当前方案",
+    "see_full_pricing": "查看完整方案对比 →",
+    "maybe_later": "稍后再说",
+    "required_badge": "所需方案",
+    "pro_badge": "付费功能",
+    "placeholder_loading": "数据接入中…"
   },
   "discover": {
     "title": "发现 AI 产品",
+    "subtitle": "按分类浏览已被市场验证的 AI 产品。",
+    "browse_categories": "按分类浏览已被市场验证的 AI 产品。",
+    "categories_found": "共找到 {count} 个分类",
+    "categories_heading": "分类",
     "search_placeholder": "搜索 AI 产品...",
     "filters": "筛选",
     "clear_all": "清除全部",
@@ -34,7 +134,16 @@
     "loading": "加载中...",
     "no_results": "没有找到匹配条件的产品",
     "clear_filters": "清除所有筛选条件",
-    "failed_to_load": "加载产品失败，请重试。"
+    "failed_to_load": "加载产品失败，请重试。",
+    "browse_all": "浏览全部",
+    "layer_mature": "成熟",
+    "layer_emerging": "新兴",
+    "layer_all": "全部层级",
+    "filter_summary_active": "当前正在查看筛选结果，可清除筛选回到完整列表。",
+    "filter_summary_default": "当前显示默认的成熟分类视图。",
+    "no_categories": "暂无分类",
+    "no_results_help": "当前筛选条件可能过窄。清除筛选后可回到完整分类列表。",
+    "no_categories_help": "分类数据仍在同步中。你可以先查看新品雷达，或稍后再试。"
   },
   "watchlist": {
     "title": "我的关注列表",
@@ -43,8 +152,8 @@
     "all": "全部",
     "active": "活跃",
     "changes": "最近变更",
-    "empty_title": "您的关注列表为空",
-    "empty_desc": "开始追踪 AI 产品以获取变更通知。",
+    "empty_title": "关注列表还是空的",
+    "empty_desc": "把感兴趣的产品加入关注列表，后续更新、变更和对比会更好追踪。",
     "discover_products": "发现产品",
     "failed_to_load": "加载关注列表失败，请重试。",
     "no_recent_changes": "没有最近的追踪产品变更。"
@@ -55,8 +164,17 @@
     "export": "导出",
     "search_placeholder": "搜索产品...",
     "search_modal_title": "添加产品进行对比",
-    "empty_desc": "选择 2-5 个产品进行对比",
+    "empty_title": "开始一次聚焦的产品对比",
+    "empty_desc": "搜索并添加 2-5 个 AI 产品，即可并排查看分类、定价、置信度、状态、技术栈和近期动态。",
     "empty_btn": "添加产品",
+    "guide_step_search": "按产品名称或分类搜索目录。",
+    "guide_step_select": "选择 2-5 个解决同类问题的产品。",
+    "guide_step_compare": "查看差异、突出关键缺口，并在需要时导出。",
+    "copy_link": "复制链接",
+    "na": "暂无",
+    "radar_confidence": "置信度",
+    "radar_github_stars": "GitHub 星标",
+    "radar_growth_rate": "增长率",
     "dimension_name": "名称",
     "dimension_category": "分类",
     "dimension_description": "描述",
@@ -77,11 +195,72 @@
     "rising": "上升",
     "falling": "下降",
     "stable": "稳定",
+    "no_rising": "本期没有上升的产品。",
     "no_falling": "本期没有下降的产品。",
+    "no_stable": "本期没有稳定的产品。",
     "stable_desc": "稳定的产品将显示在这里。",
-    "this_week": "本周"
+    "this_week": "本周",
+    "chart_title": "趋势概览",
+    "chart_description": "选定时间段内的产品趋势变化",
+    "rankings_heading": "趋势排行",
+    "strength": "强度",
+    "velocity": "变化速度",
+    "products": "个产品",
+    "why_it_matters": "为什么值得关注",
+    "why_products": "{count} 个产品",
+    "why_multiple_sources": "多个来源",
+    "why_rising": "值得关注：强度为 {strength}，变化速度 +{velocity}，且已有 {productSignal} 关联到该信号。",
+    "why_falling": "值得复盘：该信号当前状态为 {status}，投入资源前应确认热度是否正在回落。",
+    "why_stable": "值得持续观察：信号已经出现但尚未明显加速，可作为相邻赛道的早期参考。",
+    "range_7d": "7天",
+    "range_30d": "30天",
+    "range_90d": "90天",
+    "range_7d_tooltip": "过去 7 天的趋势",
+    "range_30d_tooltip": "过去 30 天的趋势",
+    "range_90d_tooltip": "过去 90 天的趋势",
+    "pro_required": "需要专业版方案 — 即将上线",
+    "advanced_locked": "专业版专享",
+    "no_signals": "选定时间范围内暂无趋势信号"
+  },
+  "launches": {
+    "page_title": "新品雷达",
+    "subtitle_zh": "过去 24 小时的 AI 新品",
+    "subtitle_en": "AI launches in the past 24h",
+    "range": {
+      "24h": "过去 24 小时",
+      "7d": "过去 7 天",
+      "30d": "过去 30 天",
+      "90d": "过去 90 天"
+    },
+    "empty_zh": "暂无新品，试试切换时间范围",
+    "empty_en": "No launches yet. Try a different range.",
+    "error_zh": "加载失败，请稍后重试",
+    "error_en": "Failed to load. Please try again.",
+    "pagination": {
+      "prev": "上一页",
+      "next": "下一页",
+      "page": "第 {n} 页",
+      "showing": "第 {from}–{to} 条，共 {total} 条"
+    },
+    "filter": {
+      "category_label": "分类",
+      "all": "全部",
+      "source_label": "来源"
+    },
+    "card": {
+      "source_label": "来源",
+      "confidence_label": "置信度",
+      "view_product": "查看产品",
+      "view_source": "查看来源"
+    }
   },
   "landing": {
+    "nav": {
+      "discover": "发现",
+      "watchlist": "关注列表",
+      "compare": "对比",
+      "trends": "趋势"
+    },
     "hero_badge": "每日追踪 200+ 新 AI 产品",
     "hero_title_1": "发现全球",
     "hero_title_2": "最具创新力的 AI 产品",
@@ -273,7 +452,10 @@
     "retry": "重试",
     "details": "详情",
     "uncategorized": "未分类",
-    "no_description": "暂无描述"
+    "no_description": "暂无描述",
+    "last_7_days": "过去 7 天",
+    "last_30_days": "过去 30 天",
+    "last_90_days": "过去 90 天"
   },
   "product_detail": {
     "back_to_discover": "返回发现页",
@@ -336,5 +518,37 @@
     "saving": "保存中...",
     "save_success": "渠道配置已保存",
     "save_error": "保存渠道配置失败"
+  },
+  "newsletter": {
+    "footer_title": "邮件订阅",
+    "footer_description": "每周精选 AI 新品与趋势,直送你的邮箱。",
+    "inline_title": "订阅 AI Radar 邮件简报",
+    "inline_description": "每周精选 AI 新品与趋势简报。每日简报为付费用户专享。",
+    "email_label": "邮箱地址",
+    "email_placeholder": "you@example.com",
+    "frequency_label": "订阅频率",
+    "frequency_weekly": "每周",
+    "frequency_weekly_desc": "每周一上午送达。",
+    "frequency_daily": "每日",
+    "frequency_daily_desc": "每个工作日上午送达。",
+    "frequency_daily_locked": "入门版",
+    "submit_button": "立即订阅",
+    "submitting": "提交中…",
+    "success_title": "请查收邮箱",
+    "success_description": "我们已发送确认链接到你的邮箱,点击链接即可开始接收简报。",
+    "error_invalid_email": "请输入有效的邮箱地址。",
+    "error_already_subscribed": "该邮箱已订阅,可在邮箱中查看最新简报。",
+    "error_rate_limit_title": "操作过于频繁",
+    "error_rate_limit": "请等待 {seconds} 秒后再试。",
+    "error_server": "服务器开小差了,请稍后再试。",
+    "error_network": "网络异常,请检查连接后重试。",
+    "paywall_badge": "付费功能",
+    "paywall_title": "每日简报为入门版功能",
+    "paywall_description": "升级到入门版或更高方案即可解锁每日简报。每周简报对所有用户免费。",
+    "paywall_cta": "查看方案",
+    "paywall_dismiss": "稍后再说",
+    "privacy_notice": "订阅即表示同意我们的隐私政策,可随时取消订阅。",
+    "confirmed_title": "订阅确认成功",
+    "confirmed_description": "感谢订阅 AI Radar 邮件简报。"
   }
 }

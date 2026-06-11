@@ -2,14 +2,14 @@
  * AI Radar Crawler Service - Entry Point
  *
  * Orchestrates the full crawling pipeline:
- * 1. Fetch products from all configured data sources (Product Hunt, GitHub, Hacker News, RSS)
+ * 1. Fetch products from all configured data sources (Product Hunt, GitHub, Hacker News, RSS, HuggingFace, arXiv)
  * 2. Deduplicate against existing database products
  * 3. Enrich with missing information
  * 4. Score for confidence
  * 5. Upsert into Supabase
  *
- * Runs on a configurable cron schedule (default: daily at 2 AM).
- * Can also be triggered manually by running `npm start`.
+ * Runs on a configurable cron schedule (default: daily at 2 AM UTC).
+ * Can also be triggered manually by running `MANUAL_RUN=true npm start`.
  */
 import 'dotenv/config';
 import { CronJob } from 'cron';
@@ -18,6 +18,8 @@ import { ProductHuntSource } from './sources/producthunt.js';
 import { GitHubSource } from './sources/github.js';
 import { HackerNewsSource } from './sources/hackernews.js';
 import { RSSSource } from './sources/rss.js';
+import { HuggingFaceSource } from './sources/huggingface.js';
+import { ArxivSource } from './sources/arxiv.js';
 import { deduplicate } from './pipeline/dedup.js';
 import { enrich } from './pipeline/enrich.js';
 import { scoreProducts } from './pipeline/score.js';
@@ -37,6 +39,15 @@ const MIN_CONFIDENCE_SCORE = 30;
 
 /**
  * Initialize all data sources.
+ *
+ * W1 sources (producthunt, github, hackernews, rss) keep their direct
+ * DataSource implementation and do not participate in the rate-limiter
+ * protocol — that keeps the W1 regression window intact.
+ *
+ * W2 sources (huggingface, arxiv) extend BaseSource, which means each
+ * fetch is wrapped in:
+ *   limiter.acquire() → upstream.fetch() → recordSuccess() | recordFailure()
+ * with exponential backoff (1/2/4/8/16 min) and skip-the-day after 6 failures.
  */
 function initializeSources(): DataSource[] {
   return [
@@ -44,6 +55,8 @@ function initializeSources(): DataSource[] {
     new GitHubSource(),
     new HackerNewsSource(),
     new RSSSource(),
+    new HuggingFaceSource(),
+    new ArxivSource(),
   ];
 }
 
