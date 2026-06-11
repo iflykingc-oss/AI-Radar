@@ -18,6 +18,11 @@ import { ProductHuntSource } from './sources/producthunt.js';
 import { GitHubSource } from './sources/github.js';
 import { HackerNewsSource } from './sources/hackernews.js';
 import { RSSSource } from './sources/rss.js';
+import { ArxivSource } from './sources/arxiv.js';
+import { DevtoSource } from './sources/devto.js';
+import { LobstersSource } from './sources/lobsters.js';
+import { NpmSource } from './sources/npm.js';
+import { RedditSource } from './sources/reddit.js';
 import { deduplicate } from './pipeline/dedup.js';
 import { enrich } from './pipeline/enrich.js';
 import { scoreProducts } from './pipeline/score.js';
@@ -44,6 +49,11 @@ function initializeSources(): DataSource[] {
     new GitHubSource(),
     new HackerNewsSource(),
     new RSSSource(),
+    new ArxivSource(),
+    new DevtoSource(),
+    new LobstersSource(),
+    new NpmSource(),
+    new RedditSource(),
   ];
 }
 
