@@ -1,25 +1,25 @@
-/**
- * Supabase client - re-exports from the new @supabase/ssr setup.
- * Existing imports from '@/lib/supabase/client' will continue to work.
- */
-import { createClient as createBrowserClient } from '@/utils/supabase/client';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Singleton browser client for use in client components
-let _supabase: ReturnType<typeof createBrowserClient> | null = null;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-export function getSupabase() {
-  if (!_supabase) {
-    _supabase = createBrowserClient();
-  }
-  return _supabase;
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn(
+    '[Supabase] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY.'
+  );
 }
 
-// Named export for backward compatibility
-export const supabase = {
-  get auth() {
-    return getSupabase().auth;
-  },
-  from(table: string) {
-    return getSupabase().from(table);
-  },
-};
+export const supabase: SupabaseClient = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  }
+);
+
+export function getSupabase(): SupabaseClient {
+  return supabase;
+}
