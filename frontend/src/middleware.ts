@@ -1,12 +1,15 @@
-// Temporarily disabled to test if middleware causes 404
-// See middleware.ts.bak for original
+import createMiddleware from 'next-intl/middleware';
+import { defaultLocale, locales } from './i18n/config';
 
-import { NextResponse } from 'next/server';
-
-export function middleware() {
-  return NextResponse.next();
-}
+// Non-routing mode: middleware only reads locale from cookie, does NOT redirect
+// Pages stay at root paths (/discover, /trends, etc.) without locale prefix
+export default createMiddleware({
+  defaultLocale,
+  locales,
+  localePrefix: 'as-needed',
+});
 
 export const config = {
-  matcher: [],
+  // Only match non-API, non-static-file routes
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)'],
 };

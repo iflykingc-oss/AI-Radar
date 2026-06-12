@@ -73,39 +73,44 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen">
       {/* Section 1: Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background py-20 lg:py-32">
-        <div className="container mx-auto px-4 text-center">
-          <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm">
+      <section className="relative overflow-hidden gradient-animate py-20 lg:py-32">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 dot-pattern opacity-50" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
+
+        <div className="container mx-auto px-4 text-center relative">
+          <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm border-primary/20 bg-background/50">
             {t('hero_badge')}
           </Badge>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto">
+          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight max-w-5xl mx-auto leading-tight">
             {t('hero_title_1')}{' '}
-            <span className="text-primary">{t('hero_title_2')}</span>
+            <span className="gradient-text">{t('hero_title_2')}</span>
           </h1>
-          <p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             {t('hero_desc')}
           </p>
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="px-8 py-6 text-lg" asChild>
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button size="lg" className="px-8 py-6 text-lg rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-shadow" asChild>
               <Link href="/discover">{t('cta_free')}</Link>
             </Button>
-            <Button variant="outline" size="lg" className="px-8 py-6 text-lg">
+            <Button variant="outline" size="lg" className="px-8 py-6 text-lg rounded-full bg-background/50">
               {t('cta_demo')} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-success" />
-              <span>{t('feature_free')}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-success" />
-              <span>{t('feature_accuracy')}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-success" />
-              <span>{t('feature_free_plan')}</span>
-            </div>
+          <div className="mt-14 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground">
+            {[
+              t('feature_free'),
+              t('feature_accuracy'),
+              t('feature_free_plan'),
+            ].map((feat, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-success/10">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                </div>
+                <span>{feat}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -113,7 +118,7 @@ export default function LandingPage() {
       {/* Section 2: Pain Points */}
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
+          <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-bold">
               {t('pain_title')}
             </h2>
@@ -121,30 +126,33 @@ export default function LandingPage() {
               {t('pain_subtitle')}
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto stagger">
             {[
               {
                 icon: <Search className="h-8 w-8" />,
                 title: t('pain_scattered_title'),
                 desc: t('pain_scattered_desc'),
+                color: 'from-blue-500/10 to-cyan-500/10',
               },
               {
                 icon: <AlertTriangle className="h-8 w-8" />,
                 title: t('pain_dead_title'),
                 desc: t('pain_dead_desc'),
+                color: 'from-amber-500/10 to-orange-500/10',
               },
               {
                 icon: <Layers className="h-8 w-8" />,
                 title: t('pain_messy_title'),
                 desc: t('pain_messy_desc'),
+                color: 'from-purple-500/10 to-pink-500/10',
               },
             ].map((item, i) => (
-              <Card key={i} className="text-center p-6">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Card key={i} className="text-center p-8 card-hover border-0 bg-gradient-to-br ${item.color}">
+                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-lg shadow-primary/10">
                   {item.icon}
                 </div>
                 <h3 className="text-xl font-semibold">{item.title}</h3>
-                <p className="mt-3 text-muted-foreground">{item.desc}</p>
+                <p className="mt-3 text-muted-foreground leading-relaxed">{item.desc}</p>
               </Card>
             ))}
           </div>
@@ -154,42 +162,46 @@ export default function LandingPage() {
       {/* Section 3: Core Features */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
+          <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-bold">
               {t('features_title')}
             </h2>
           </div>
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto stagger">
             {[
               {
                 icon: <Search className="h-6 w-6" />,
                 title: t('feat_discovery_title'),
                 desc: t('feat_discovery_desc'),
+                gradient: 'from-blue-500 to-cyan-500',
               },
               {
                 icon: <Shield className="h-6 w-6" />,
                 title: t('feat_verification_title'),
                 desc: t('feat_verification_desc'),
+                gradient: 'from-emerald-500 to-teal-500',
               },
               {
                 icon: <Bell className="h-6 w-6" />,
                 title: t('feat_alerts_title'),
                 desc: t('feat_alerts_desc'),
+                gradient: 'from-amber-500 to-orange-500',
               },
               {
                 icon: <Target className="h-6 w-6" />,
                 title: t('feat_comparison_title'),
                 desc: t('feat_comparison_desc'),
+                gradient: 'from-purple-500 to-pink-500',
               },
             ].map((feature, i) => (
-              <Card key={i} className="p-6 hover:shadow-lg transition-shadow">
+              <Card key={i} className="p-6 card-hover border-0 shadow-sm">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${feature.gradient} text-white shadow-lg`}>
                     {feature.icon}
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold">{feature.title}</h3>
-                    <p className="mt-2 text-muted-foreground">{feature.desc}</p>
+                    <p className="mt-2 text-muted-foreground leading-relaxed">{feature.desc}</p>
                   </div>
                 </div>
               </Card>
@@ -204,20 +216,22 @@ export default function LandingPage() {
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">
             {t('verification_title')}
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-12">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-14">
             {t('verification_desc')}
           </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto stagger">
             {[
-              { label: t('ver_freshness_label'), desc: t('ver_freshness_desc'), color: 'text-blue-500' },
-              { label: t('ver_multi_label'), desc: t('ver_multi_desc'), color: 'text-green-500' },
-              { label: t('ver_engagement_label'), desc: t('ver_engagement_desc'), color: 'text-yellow-500' },
-              { label: t('ver_technical_label'), desc: t('ver_technical_desc'), color: 'text-purple-500' },
+              { label: t('ver_freshness_label'), desc: t('ver_freshness_desc'), gradient: 'from-blue-500 to-cyan-500' },
+              { label: t('ver_multi_label'), desc: t('ver_multi_desc'), gradient: 'from-emerald-500 to-teal-500' },
+              { label: t('ver_engagement_label'), desc: t('ver_engagement_desc'), gradient: 'from-amber-500 to-orange-500' },
+              { label: t('ver_technical_label'), desc: t('ver_technical_desc'), gradient: 'from-purple-500 to-pink-500' },
             ].map((d, i) => (
-              <Card key={i} className="p-6 text-center">
-                <div className={`text-4xl font-bold ${d.color}`}>{i + 1}D</div>
-                <h3 className="mt-3 font-semibold">{d.label}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{d.desc}</p>
+              <Card key={i} className="p-6 text-center card-hover border-0 shadow-sm">
+                <div className={`inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${d.gradient} text-white text-2xl font-bold shadow-lg mb-4`}>
+                  {i + 1}D
+                </div>
+                <h3 className="font-semibold text-lg">{d.label}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{d.desc}</p>
               </Card>
             ))}
           </div>
@@ -237,27 +251,48 @@ export default function LandingPage() {
               <TabsTrigger value="developer">{t('user_developer')}</TabsTrigger>
             </TabsList>
             <TabsContent value="entrepreneur" className="mt-6">
-              <Card className="p-8">
-                <h3 className="text-xl font-semibold mb-3">{t('user_entrepreneur_name')}</h3>
-                <p className="text-muted-foreground">
-                  {t('user_entrepreneur_quote')}
-                </p>
+              <Card className="p-8 border-0 shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-bold text-lg">
+                    L
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-3">{t('user_entrepreneur_name')}</h3>
+                    <p className="text-muted-foreground leading-relaxed italic">
+                      &ldquo;{t('user_entrepreneur_quote')}&rdquo;
+                    </p>
+                  </div>
+                </div>
               </Card>
             </TabsContent>
             <TabsContent value="investor" className="mt-6">
-              <Card className="p-8">
-                <h3 className="text-xl font-semibold mb-3">{t('user_investor_name')}</h3>
-                <p className="text-muted-foreground">
-                  {t('user_investor_quote')}
-                </p>
+              <Card className="p-8 border-0 shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-white font-bold text-lg">
+                    S
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-3">{t('user_investor_name')}</h3>
+                    <p className="text-muted-foreground leading-relaxed italic">
+                      &ldquo;{t('user_investor_quote')}&rdquo;
+                    </p>
+                  </div>
+                </div>
               </Card>
             </TabsContent>
             <TabsContent value="developer" className="mt-6">
-              <Card className="p-8">
-                <h3 className="text-xl font-semibold mb-3">{t('user_developer_name')}</h3>
-                <p className="text-muted-foreground">
-                  {t('user_developer_quote')}
-                </p>
+              <Card className="p-8 border-0 shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold text-lg">
+                    A
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-3">{t('user_developer_name')}</h3>
+                    <p className="text-muted-foreground leading-relaxed italic">
+                      &ldquo;{t('user_developer_quote')}&rdquo;
+                    </p>
+                  </div>
+                </div>
               </Card>
             </TabsContent>
           </Tabs>
@@ -265,21 +300,20 @@ export default function LandingPage() {
       </section>
 
       {/* Section 6: Metrics */}
-      <section className="py-20 bg-primary/5">
-        <div className="container mx-auto px-4 text-center">
-          <div className="grid sm:grid-cols-3 gap-8 max-w-3xl mx-auto">
-            <div>
-              <div className="text-5xl font-extrabold text-primary">50,000+</div>
-              <p className="mt-2 text-muted-foreground">AI Tools Tracked</p>
-            </div>
-            <div>
-              <div className="text-5xl font-extrabold text-primary">200+</div>
-              <p className="mt-2 text-muted-foreground">New Products Daily</p>
-            </div>
-            <div>
-              <div className="text-5xl font-extrabold text-primary">10+</div>
-              <p className="mt-2 text-muted-foreground">Channels Monitored</p>
-            </div>
+      <section className="py-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-cyan-500/5 to-purple-500/5" />
+        <div className="container mx-auto px-4 text-center relative">
+          <div className="grid sm:grid-cols-3 gap-8 max-w-3xl mx-auto stagger">
+            {[
+              { value: '50,000+', label: 'AI Tools Tracked' },
+              { value: '200+', label: 'New Products Daily' },
+              { value: '10+', label: 'Channels Monitored' },
+            ].map((stat, i) => (
+              <div key={i} className="p-6">
+                <div className="text-5xl font-extrabold gradient-text">{stat.value}</div>
+                <p className="mt-3 text-muted-foreground font-medium">{stat.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -297,55 +331,55 @@ export default function LandingPage() {
           {productsLoading ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-48 rounded-xl bg-muted animate-pulse" />
+                <div key={i} className="h-56 rounded-2xl bg-muted animate-pulse" />
               ))}
             </div>
           ) : topProducts.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto stagger">
               {topProducts.map((product) => {
                 const confidence = getConfidenceLevel(product.confidence_score);
                 const confidenceColor = {
-                  high: 'bg-success/10 text-success',
-                  medium: 'bg-warning/10 text-warning',
-                  low: 'bg-destructive/10 text-destructive',
-                  unverified: 'bg-muted text-muted-foreground',
+                  high: 'bg-success/10 text-success border-success/20',
+                  medium: 'bg-warning/10 text-warning border-warning/20',
+                  low: 'bg-destructive/10 text-destructive border-destructive/20',
+                  unverified: 'bg-muted text-muted-foreground border-muted-foreground/20',
                 }[confidence];
 
                 return (
-                  <Card key={product.id} className="p-6 hover:shadow-lg transition-shadow">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-semibold text-lg">{product.name}</h3>
-                        <p className="text-sm text-muted-foreground">{product.category || 'AI'}</p>
+                  <Card key={product.id} className="p-6 card-hover border-0 shadow-sm group">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">{product.name}</h3>
+                        <p className="text-sm text-muted-foreground mt-0.5">{product.category || 'AI'}</p>
                       </div>
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${confidenceColor}`}>
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold border ${confidenceColor}`}>
                         {formatConfidenceScore(product.confidence_score)}
                       </span>
                     </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
                       {product.description || 'No description available'}
                     </p>
-                    <div className="flex flex-wrap gap-1.5 mb-4">
+                    <div className="flex flex-wrap gap-1.5 mb-5">
                       {(product.tags || []).slice(0, 3).map((tag) => (
-                        <span key={tag} className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                        <span key={tag} className="inline-flex items-center rounded-full bg-primary/5 px-2.5 py-0.5 text-xs text-primary font-medium">
                           {tag}
                         </span>
                       ))}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 pt-4 border-t">
                       {product.github_url && (
-                        <a href={product.github_url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
+                        <a href={product.github_url} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                           <Github className="h-4 w-4" />
                         </a>
                       )}
                       {product.website_url && (
-                        <a href={product.website_url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
+                        <a href={product.website_url} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                           <ExternalLink className="h-4 w-4" />
                         </a>
                       )}
                       {product.github_stars && product.github_stars > 0 && (
-                        <span className="text-xs text-muted-foreground flex items-center gap-0.5 ml-auto">
-                          <Star className="h-3 w-3" />
+                        <span className="text-xs text-muted-foreground flex items-center gap-1 ml-auto font-medium">
+                          <Star className="h-3.5 w-3.5" />
                           {product.github_stars >= 1000 ? `${(product.github_stars / 1000).toFixed(1)}k` : product.github_stars}
                         </span>
                       )}
@@ -377,11 +411,11 @@ export default function LandingPage() {
             <h2 className="text-3xl sm:text-4xl font-bold">{t('pricing_title')}</h2>
             <p className="mt-4 text-lg text-muted-foreground">{t('pricing_subtitle')}</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto stagger">
             {pricingTiers.map((tier) => (
-              <Card key={tier.name} className={`relative p-6 ${tier.popular ? 'border-primary ring-2 ring-primary' : ''}`}>
+              <Card key={tier.name} className={`relative p-6 card-hover ${tier.popular ? 'border-primary ring-2 ring-primary shadow-lg shadow-primary/10' : 'border-0 shadow-sm'}`}>
                 {tier.popular && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">Most Popular</Badge>
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1">Most Popular</Badge>
                 )}
                 <h3 className="text-xl font-semibold">{tier.name}</h3>
                 <div className="mt-4">
@@ -392,12 +426,14 @@ export default function LandingPage() {
                 <ul className="mt-6 space-y-3">
                   {tier.features.map((f, fi) => (
                     <li key={fi} className="flex items-start gap-2 text-sm">
-                      <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/10 mt-0.5">
+                        <CheckCircle2 className="h-3 w-3 text-success" />
+                      </div>
                       {f}
                     </li>
                   ))}
                 </ul>
-                <Button className="w-full mt-6" variant={tier.popular ? 'default' : 'outline'}>
+                <Button className="w-full mt-6 rounded-full" variant={tier.popular ? 'default' : 'outline'}>
                   {tier.cta}
                 </Button>
               </Card>
@@ -410,24 +446,24 @@ export default function LandingPage() {
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4 max-w-3xl">
           <h2 className="text-3xl font-bold text-center mb-12">{t('faq_title')}</h2>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {faqItems.map((item, i) => (
-              <details key={i} className="group rounded-lg border bg-card p-4 [&_summary::-webkit-details-marker]:hidden">
-                <summary className="flex cursor-pointer items-center justify-between font-medium">
+              <details key={i} className="group rounded-xl border bg-card p-5 [&_summary::-webkit-details-marker]:hidden shadow-sm">
+                <summary className="flex cursor-pointer items-center justify-between font-medium text-lg">
                   {item.question}
                   <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
                 </summary>
-                <p className="mt-3 text-sm text-muted-foreground">{item.answer}</p>
+                <p className="mt-3 text-muted-foreground leading-relaxed">{item.answer}</p>
               </details>
             ))}
           </div>
 
-          <div className="mt-16 text-center">
+          <div className="mt-16 text-center p-8 rounded-2xl bg-gradient-to-br from-primary/5 to-cyan-500/5 border border-primary/10">
             <h3 className="text-2xl font-bold">{t('cta_title')}</h3>
-            <p className="mt-3 text-muted-foreground">
+            <p className="mt-3 text-muted-foreground max-w-md mx-auto">
               {t('cta_desc')}
             </p>
-            <Button size="lg" className="mt-6 px-8" asChild>
+            <Button size="lg" className="mt-6 px-8 rounded-full shadow-lg shadow-primary/25" asChild>
               <Link href="/discover">{t('cta_button')}</Link>
             </Button>
           </div>
@@ -435,62 +471,63 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-12">
+      <footer className="border-t bg-muted/30 py-14">
         <div className="container mx-auto px-4">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-8">
-            <div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-10">
+            <div className="lg:col-span-1">
               <div className="flex items-center space-x-2 mb-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-cyan-600 text-white font-bold text-sm">
                   AI
                 </div>
-                <span className="font-bold">AI Radar</span>
+                <span className="font-bold text-lg">AI Radar</span>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {t('footer_tagline')}
               </p>
             </div>
-            <div>
-              <h4 className="font-semibold mb-3">{t('footer_product')}</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/discover" className="hover:text-foreground">{tNav('discover')}</Link></li>
-                <li><Link href="/watchlist" className="hover:text-foreground">{tNav('watchlist')}</Link></li>
-                <li><Link href="/compare" className="hover:text-foreground">{tNav('compare')}</Link></li>
-                <li><Link href="/trends" className="hover:text-foreground">{tNav('trends')}</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3">{t('footer_resources')}</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground">{t('footer_api_docs')}</Link></li>
-                <li><Link href="#" className="hover:text-foreground">{t('footer_blog')}</Link></li>
-                <li><Link href="#" className="hover:text-foreground">{t('footer_changelog')}</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3">{t('footer_company')}</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground">{t('footer_about')}</Link></li>
-                <li><Link href="#" className="hover:text-foreground">{t('footer_contact')}</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3">{t('footer_legal')}</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/privacy" className="hover:text-foreground">{t('footer_privacy')}</Link></li>
-                <li><Link href="/terms" className="hover:text-foreground">{t('footer_terms')}</Link></li>
-                <li><Link href="/cookie-settings" className="hover:text-foreground">{t('footer_cookies')}</Link></li>
-              </ul>
-            </div>
+            {[
+              { title: t('footer_product'), links: [
+                { href: '/discover', label: tNav('discover') },
+                { href: '/watchlist', label: tNav('watchlist') },
+                { href: '/compare', label: tNav('compare') },
+                { href: '/trends', label: tNav('trends') },
+              ]},
+              { title: t('footer_resources'), links: [
+                { href: '#', label: t('footer_api_docs') },
+                { href: '#', label: t('footer_blog') },
+                { href: '#', label: t('footer_changelog') },
+              ]},
+              { title: t('footer_company'), links: [
+                { href: '#', label: t('footer_about') },
+                { href: '#', label: t('footer_contact') },
+              ]},
+              { title: t('footer_legal'), links: [
+                { href: '/privacy', label: t('footer_privacy') },
+                { href: '/terms', label: t('footer_terms') },
+                { href: '/cookie-settings', label: t('footer_cookies') },
+              ]},
+            ].map((section) => (
+              <div key={section.title}>
+                <h4 className="font-semibold mb-4">{section.title}</h4>
+                <ul className="space-y-3 text-sm text-muted-foreground">
+                  {section.links.map((link) => (
+                    <li key={link.label}>
+                      <Link href={link.href} className="hover:text-foreground transition-colors">{link.label}</Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
-          <div className="mt-8 flex items-center justify-between border-t pt-8">
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-between border-t pt-8 gap-4">
             <p className="text-sm text-muted-foreground">
               {t('footer_copyright', { year: new Date().getFullYear() })}
             </p>
             <div className="flex items-center space-x-4">
-              <a href="#" className="text-muted-foreground hover:text-foreground">
+              <a href="#" className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                 <Twitter className="h-5 w-5" />
               </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground">
+              <a href="#" className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                 <Github className="h-5 w-5" />
               </a>
             </div>

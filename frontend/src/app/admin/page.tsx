@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Users, Package, DollarSign, TrendingUp, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Users, Package, DollarSign, TrendingUp, AlertCircle, CheckCircle, XCircle, Shield, Loader2 } from 'lucide-react';
+import { LoginModal } from '@/components/auth/LoginModal';
+import { useTranslations } from 'next-intl';
 
 const stats = [
   { label: 'Total Products', value: '10,234', change: '+127 this week', icon: Package, color: 'text-blue-500' },
@@ -22,9 +23,53 @@ const pendingReviews = [
 ];
 
 export default function AdminPage() {
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const tCommon = useTranslations('common');
+
+  useEffect(() => {
+    async function checkAdmin() {
+      try {
+        const res = await fetch('/api/admin/check');
+        const data = await res.json();
+        setIsAdmin(data.isAdmin);
+      } catch {
+        setIsAdmin(false);
+      }
+    }
+    checkAdmin();
+  }, []);
+
+  // Loading state
+  if (isAdmin === null) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Not authenticated or not admin
+  if (!isAdmin) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4">
+        <Shield className="h-16 w-16 text-muted-foreground mb-4" />
+        <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
+        <p className="text-muted-foreground mb-6 text-center max-w-md">
+          You need admin privileges to access this page. Please log in with an admin account.
+        </p>
+        <Button onClick={() => setLoginOpen(true)}>Log in as Admin</Button>
+        <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+      <div className="flex items-center gap-3 mb-8">
+        <Shield className="h-8 w-8 text-primary" />
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+      </div>
 
       {/* Stats */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
