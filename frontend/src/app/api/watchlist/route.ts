@@ -1,13 +1,30 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/client';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { z } from 'zod';
+import { ensureProfile } from '@/lib/ensure-profile';
 
 const watchlistSchema = z.object({
   product_id: z.string().uuid(),
 });
 
+async function getSupabase() {
+  const cookieStore = await cookies();
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll() {},
+      },
+    }
+  );
+}
+
 export async function GET() {
   try {
+    const supabase = await getSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ products: [] });
@@ -34,10 +51,14 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const supabase = await getSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Ensure profile exists
+    await ensureProfile(supabase, user);
 
     const body = await request.json();
     const parsed = watchlistSchema.safeParse(body);
@@ -66,6 +87,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const supabase = await getSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -24,14 +24,33 @@ export async function GET() {
       return NextResponse.json({ isAdmin: false, error: 'Not authenticated' }, { status: 401 });
     }
 
-    const { data: profile, error: profileError } = await supabase
+    // Try to get profile
+    let { data: profile, error: profileError } = await supabase
       .from('user_profiles')
       .select('role')
       .eq('id', user.id)
       .single();
 
+    // Auto-create profile if missing (fallback for when DB trigger isn't set up)
     if (profileError || !profile) {
-      return NextResponse.json({ isAdmin: false, error: 'Profile not found' }, { status: 403 });
+      const { error: insertError } = await supabase
+        .from('user_profiles')
+        .insert({
+          id: user.id,
+          email: user.email!,
+          display_name: user.user_metadata?.display_name || user.user_metadata?.full_name || user.email!.split('@')[0],
+          avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+        })
+        .select('role')
+        .single();
+
+      if (insertError) {
+        console.error('Auto-create profile failed:', insertError.message);
+        return NextResponse.json({ isAdmin: false, error: 'Profile creation failed' }, { status: 500 });
+      }
+
+      // New users are not admin by default
+      return NextResponse.json({ isAdmin: false, role: 'user' });
     }
 
     return NextResponse.json({ isAdmin: profile.role === 'admin', role: profile.role });
