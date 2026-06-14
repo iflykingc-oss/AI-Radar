@@ -305,9 +305,9 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 text-center relative">
           <div className="grid sm:grid-cols-3 gap-8 max-w-3xl mx-auto stagger">
             {[
-              { value: '50,000+', label: 'AI Tools Tracked' },
-              { value: '200+', label: 'New Products Daily' },
-              { value: '10+', label: 'Channels Monitored' },
+              { value: t('metrics_products_tracked'), label: t('metrics_label_tracked') },
+              { value: t('metrics_products_daily'), label: t('metrics_label_daily') },
+              { value: t('metrics_channels'), label: t('metrics_label_channels') },
             ].map((stat, i) => (
               <div key={i} className="p-6">
                 <div className="text-5xl font-extrabold gradient-text">{stat.value}</div>
@@ -322,9 +322,9 @@ export default function LandingPage() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold">Discover Top AI Products</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold">{t('product_showcase_title')}</h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Real products, validated by our 4D verification system
+              {t('product_showcase_desc')}
             </p>
           </div>
 
@@ -390,14 +390,14 @@ export default function LandingPage() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">Products loading...</p>
+              <p className="text-muted-foreground">{t('product_loading')}</p>
             </div>
           )}
 
           <div className="text-center mt-8">
             <Button size="lg" asChild>
               <Link href="/discover">
-                Explore All Products <ArrowRight className="ml-2 h-4 w-4" />
+                {t('product_showcase_btn')} <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
@@ -415,7 +415,7 @@ export default function LandingPage() {
             {pricingTiers.map((tier) => (
               <Card key={tier.name} className={`relative p-6 card-hover ${tier.popular ? 'border-primary ring-2 ring-primary shadow-lg shadow-primary/10' : 'border-0 shadow-sm'}`}>
                 {tier.popular && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1">Most Popular</Badge>
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1">{t('pricing_most_popular')}</Badge>
                 )}
                 <h3 className="text-xl font-semibold">{tier.name}</h3>
                 <div className="mt-4">
