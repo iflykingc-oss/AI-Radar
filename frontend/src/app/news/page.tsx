@@ -68,6 +68,7 @@ export default function NewsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -111,6 +112,7 @@ export default function NewsPage() {
       setNews(data.products || []);
       setTotalPages(data.pagination?.totalPages || 1);
       setTotal(data.pagination?.total || 0);
+      setLastUpdated(new Date());
     } catch (e) {
       console.error('Failed to fetch news:', e);
       setError(tCommon('error_desc', { defaultValue: 'Failed to load news. Please try again.' }));
@@ -121,6 +123,10 @@ export default function NewsPage() {
 
   useEffect(() => {
     fetchNews();
+
+    // Auto-refresh every 5 minutes
+    const interval = setInterval(fetchNews, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, [fetchNews]);
 
   // Debounced search
@@ -225,8 +231,14 @@ export default function NewsPage() {
         {/* Results Count */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-muted-foreground">
-            {loading ? 'Loading...' : `${total} news articles found`}
+            {loading ? tCommon('loading') : `${total} ${t('news_found')}`}
           </p>
+          {lastUpdated && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {tCommon('updated')}: {lastUpdated.toLocaleTimeString()}
+            </p>
+          )}
         </div>
 
         {/* News List */}
