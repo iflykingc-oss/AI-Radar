@@ -18,9 +18,13 @@ import {
   Globe,
   Flame,
   Loader2,
+  Tag,
+  Layers,
+  Rocket,
+  Eye,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { formatConfidenceScore, getConfidenceLevel } from '@/lib/utils';
+import WordCloud from '@/components/WordCloud';
 
 interface TrendingProduct {
   id: string;
@@ -36,6 +40,8 @@ interface TrendingProduct {
   logo_url?: string | null;
   source: string;
   created_at: string;
+  trend_score?: number;
+  trend_category?: string;
 }
 
 interface TrendData {
@@ -46,40 +52,46 @@ interface TrendData {
   topCategories: { name: string; count: number; growth: number }[];
 }
 
-function MiniBar({ value, max, color }: { value: number; max: number; color: string }) {
-  const width = Math.min(100, (value / max) * 100);
+interface WordData {
+  text: string;
+  value: number;
+}
+
+function GrowthBadge({ value }: { value: number }) {
+  if (value > 10) return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 gap-1"><TrendingUp className="h-3 w-3" /> +{value.toFixed(1)}%</Badge>;
+  if (value > 0) return <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 gap-1"><TrendingUp className="h-3 w-3" /> +{value.toFixed(1)}%</Badge>;
+  if (value < -5) return <Badge className="bg-red-500/10 text-red-600 border-red-500/20 gap-1"><TrendingDown className="h-3 w-3" /> {value.toFixed(1)}%</Badge>;
+  return <Badge variant="outline" className="gap-1"><Minus className="h-3 w-3" /> {value.toFixed(1)}%</Badge>;
+}
+
+function TrendCategoryBadge({ category }: { category: string }) {
+  const config: Record<string, { icon: React.ReactNode; className: string }> = {
+    hot: { icon: <Flame className="h-3 w-3" />, className: 'bg-red-500/10 text-red-600 border-red-500/20' },
+    rising: { icon: <TrendingUp className="h-3 w-3" />, className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
+    stable: { icon: <Activity className="h-3 w-3" />, className: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
+    declining: { icon: <TrendingDown className="h-3 w-3" />, className: 'bg-gray-500/10 text-gray-600 border-gray-500/20' },
+  };
+
+  const { icon, className } = config[category] || config.stable;
+
   return (
-    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-      <div
-        className={`h-full rounded-full transition-all ${color}`}
-        style={{ width: `${width}%` }}
-      />
-    </div>
+    <Badge variant="outline" className={className}>
+      {icon} {category}
+    </Badge>
   );
 }
 
-function GrowthIndicator({ value }: { value: number }) {
-  if (value > 0) {
-    return (
-      <span className="flex items-center gap-1 text-sm text-emerald-600">
-        <TrendingUp className="h-3.5 w-3.5" />
-        +{value.toFixed(1)}%
-      </span>
-    );
-  }
-  if (value < 0) {
-    return (
-      <span className="flex items-center gap-1 text-sm text-red-600">
-        <TrendingDown className="h-3.5 w-3.5" />
-        {value.toFixed(1)}%
-      </span>
-    );
-  }
+function MiniBarChart({ data, max }: { data: number[]; max: number }) {
   return (
-    <span className="flex items-center gap-1 text-sm text-muted-foreground">
-      <Minus className="h-3.5 w-3.5" />
-      0%
-    </span>
+    <div className="flex items-end gap-1 h-8">
+      {data.map((value, i) => (
+        <div
+          key={i}
+          className="flex-1 bg-primary/20 rounded-t-sm transition-all hover:bg-primary/40"
+          style={{ height: `${(value / max) * 100}%` }}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -87,15 +99,37 @@ export default function TrendsPage() {
   const t = useTranslations('trends');
   const [data, setData] = useState<TrendData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'trending' | 'rising' | 'new'>('trending');
+  const [activeTab, setActiveTab] = useState<'trending' | 'rising' | 'new' | 'categories'>('trending');
+  const [wordCloudData, setWordCloudData] = useState<WordData[]>([]);
 
   useEffect(() => {
     async function fetchTrends() {
       try {
-        const res = await fetch('/api/trends/top20');
+        const res = await fetch('/api/trends/top20?limit=50');
         if (res.ok) {
           const result = await res.json();
           setData(result);
+
+          // Generate word cloud from tags
+          const tagMap = new Map<string, number>();
+          const allProducts = [
+            ...(result.trending || []),
+            ...(result.rising || []),
+            ...(result.newThisWeek || []),
+          ];
+
+          allProducts.forEach((product: TrendingProduct) => {
+            product.tags?.forEach((tag: string) => {
+              tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
+            });
+          });
+
+          const wordData = Array.from(tagMap.entries())
+            .map(([text, value]) => ({ text, value }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 50);
+
+          setWordCloudData(wordData);
         }
       } catch (e) {
         console.error('Failed to fetch trends:', e);
@@ -116,6 +150,7 @@ export default function TrendsPage() {
 
   const trendingProducts = data?.trending || [];
   const risingProducts = data?.rising || [];
+  const fallingProducts = data?.falling || [];
   const newProducts = data?.newThisWeek || [];
   const topCategories = data?.topCategories || [];
 
@@ -123,12 +158,14 @@ export default function TrendsPage() {
     ? trendingProducts
     : activeTab === 'rising'
     ? risingProducts
-    : newProducts;
+    : activeTab === 'new'
+    ? newProducts
+    : [];
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-muted/30">
+      <div className="border-b bg-gradient-to-b from-purple-500/5 to-transparent">
         <div className="container-custom py-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white">
@@ -146,44 +183,19 @@ export default function TrendsPage() {
 
       <div className="container-custom py-6">
         {/* Stats Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           {[
-            {
-              label: 'Trending Now',
-              value: trendingProducts.length,
-              icon: <Flame className="h-5 w-5" />,
-              color: 'from-red-500 to-orange-500',
-            },
-            {
-              label: 'Rising Fast',
-              value: risingProducts.length,
-              icon: <TrendingUp className="h-5 w-5" />,
-              color: 'from-emerald-500 to-teal-500',
-            },
-            {
-              label: 'New This Week',
-              value: newProducts.length,
-              icon: <Zap className="h-5 w-5" />,
-              color: 'from-blue-500 to-cyan-500',
-            },
-            {
-              label: 'Categories',
-              value: topCategories.length,
-              icon: <Globe className="h-5 w-5" />,
-              color: 'from-purple-500 to-pink-500',
-            },
+            { label: '🔥 Hot', value: trendingProducts.filter(p => p.trend_category === 'hot').length, color: 'from-red-500 to-orange-500' },
+            { label: '📈 Rising', value: risingProducts.length, color: 'from-emerald-500 to-teal-500' },
+            { label: '📉 Falling', value: fallingProducts.length, color: 'from-gray-500 to-gray-600' },
+            { label: '✨ New', value: newProducts.length, color: 'from-blue-500 to-cyan-500' },
+            { label: '📂 Categories', value: topCategories.length, color: 'from-purple-500 to-pink-500' },
           ].map((stat, i) => (
-            <Card key={i} className="border-border/50">
-              <CardContent className="pt-5">
-                <div className="flex items-center gap-3">
-                  <div className={`h-10 w-10 rounded-lg bg-gradient-to-br ${stat.color} flex items-center justify-center text-white shadow-sm`}>
-                    {stat.icon}
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{stat.value}</div>
-                    <div className="text-xs text-muted-foreground">{stat.label}</div>
-                  </div>
-                </div>
+            <Card key={i} className="border-border/50 overflow-hidden">
+              <CardContent className="pt-5 pb-4 relative">
+                <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.color}`} />
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
               </CardContent>
             </Card>
           ))}
@@ -198,6 +210,7 @@ export default function TrendsPage() {
                 { key: 'trending', label: '🔥 Trending', count: trendingProducts.length },
                 { key: 'rising', label: '📈 Rising', count: risingProducts.length },
                 { key: 'new', label: '✨ New', count: newProducts.length },
+                { key: 'categories', label: '📂 Categories', count: topCategories.length },
               ].map((tab) => (
                 <button
                   key={tab.key}
@@ -216,171 +229,235 @@ export default function TrendsPage() {
               ))}
             </div>
 
-            {/* Product List */}
-            <div className="space-y-3">
-              {displayProducts.length === 0 ? (
-                <Card className="border-border/50">
-                  <CardContent className="py-12 text-center">
-                    <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No data yet</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Trends will appear as the crawler collects more data
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                displayProducts.map((product, index) => (
-                  <Link key={product.id} href={`/discover/${product.slug}`} className="block group">
-                    <div className="bg-card rounded-xl border border-border/50 p-4 transition-all hover:border-primary/30 hover:shadow-md">
+            {/* Content */}
+            {activeTab === 'categories' ? (
+              /* Categories View */
+              <div className="space-y-4">
+                {topCategories.map((cat, index) => (
+                  <Card key={cat.name} className="border-border/50">
+                    <CardContent className="p-4">
                       <div className="flex items-center gap-4">
-                        {/* Rank */}
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted text-lg font-bold text-muted-foreground shrink-0">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted text-lg font-bold text-muted-foreground">
                           {index + 1}
                         </div>
-
-                        {/* Logo */}
-                        <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center overflow-hidden shrink-0 border border-primary/10">
-                          {product.logo_url ? (
-                            <img src={product.logo_url} alt={product.name} className="h-8 w-8 object-cover rounded-md" />
-                          ) : (
-                            <span className="text-lg font-bold text-primary">{product.name.charAt(0)}</span>
-                          )}
+                        <div className="flex-1">
+                          <h3 className="font-semibold">{cat.name}</h3>
+                          <p className="text-sm text-muted-foreground">{cat.count} products</p>
                         </div>
+                        <GrowthBadge value={cat.growth} />
+                      </div>
+                      <div className="mt-3">
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-primary to-cyan-500 rounded-full"
+                            style={{ width: `${Math.min(100, (cat.count / (topCategories[0]?.count || 1)) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              /* Products View */
+              <div className="space-y-3">
+                {displayProducts.length === 0 ? (
+                  <Card className="border-border/50">
+                    <CardContent className="py-12 text-center">
+                      <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">No data yet</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Trends will appear as the crawler collects more data
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  displayProducts.map((product, index) => (
+                    <Link key={product.id} href={`/discover/${product.slug}`} className="block group">
+                      <div className="bg-card rounded-xl border border-border/50 p-4 transition-all hover:border-primary/30 hover:shadow-md">
+                        <div className="flex items-center gap-4">
+                          {/* Rank */}
+                          <div className={`flex items-center justify-center w-10 h-10 rounded-lg text-lg font-bold shrink-0 ${
+                            index < 3 ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white' : 'bg-muted text-muted-foreground'
+                          }`}>
+                            {index + 1}
+                          </div>
 
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-sm group-hover:text-primary transition-colors truncate">
-                              {product.name}
-                            </h3>
-                            {product.category && (
-                              <Badge variant="outline" className="text-xs shrink-0">
-                                {product.category}
-                              </Badge>
+                          {/* Logo */}
+                          <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center overflow-hidden shrink-0 border border-primary/10">
+                            {product.logo_url ? (
+                              <img src={product.logo_url} alt={product.name} className="h-8 w-8 object-cover rounded-md" />
+                            ) : (
+                              <span className="text-lg font-bold text-primary">{product.name.charAt(0)}</span>
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                            {product.description}
-                          </p>
-                        </div>
 
-                        {/* Stats */}
-                        <div className="flex items-center gap-4 shrink-0">
-                          {product.github_stars && product.github_stars > 0 && (
-                            <div className="text-right">
-                              <div className="flex items-center gap-1 text-sm font-medium">
-                                <Star className="h-3.5 w-3.5 text-amber-500" />
-                                {product.github_stars >= 1000
-                                  ? `${(product.github_stars / 1000).toFixed(1)}k`
-                                  : product.github_stars.toLocaleString()}
-                              </div>
-                              <div className="text-xs text-muted-foreground">stars</div>
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-sm group-hover:text-primary transition-colors truncate">
+                                {product.name}
+                              </h3>
+                              {product.trend_category && (
+                                <TrendCategoryBadge category={product.trend_category} />
+                              )}
                             </div>
-                          )}
-                          <div className="text-right">
-                            <GrowthIndicator value={product.weekly_growth_rate} />
-                            <div className="text-xs text-muted-foreground">weekly</div>
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                              {product.description}
+                            </p>
                           </div>
-                          <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                          {/* Stats */}
+                          <div className="flex items-center gap-4 shrink-0">
+                            {product.github_stars && product.github_stars > 0 && (
+                              <div className="text-right hidden sm:block">
+                                <div className="flex items-center gap-1 text-sm font-medium">
+                                  <Star className="h-3.5 w-3.5 text-amber-500" />
+                                  {product.github_stars >= 1000
+                                    ? `${(product.github_stars / 1000).toFixed(1)}k`
+                                    : product.github_stars.toLocaleString()}
+                                </div>
+                              </div>
+                            )}
+                            <GrowthBadge value={product.weekly_growth_rate || 0} />
+                            <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        </div>
+
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-1.5 mt-3 ml-14">
+                          {product.tags?.slice(0, 4).map((tag) => (
+                            <span key={tag} className="tag text-xs">
+                              {tag}
+                            </span>
+                          ))}
                         </div>
                       </div>
-
-                      {/* Tags */}
-                      <div className="flex flex-wrap gap-1.5 mt-3 ml-14">
-                        {product.tags.slice(0, 4).map((tag) => (
-                          <span key={tag} className="tag text-xs">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </Link>
-                ))
-              )}
-            </div>
+                    </Link>
+                  ))
+                )}
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Word Cloud */}
+            <Card className="border-border/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Tag className="h-4 w-4" />
+                  Trending Tags
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-center">
+                  <WordCloud words={wordCloudData} width={280} height={200} />
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Top Categories */}
             <Card className="border-border/50">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Globe className="h-4 w-4" />
+                  <Layers className="h-4 w-4" />
                   Top Categories
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {topCategories.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No data yet</p>
-                ) : (
-                  topCategories.slice(0, 8).map((cat, i) => (
-                    <div key={cat.name} className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{cat.name}</span>
-                        <span className="text-xs text-muted-foreground">{cat.count} products</span>
+                {topCategories.slice(0, 6).map((cat, i) => (
+                  <div key={cat.name} className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">{cat.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">{cat.count}</span>
+                        <GrowthBadge value={cat.growth} />
                       </div>
-                      <MiniBar
-                        value={cat.count}
-                        max={topCategories[0]?.count || 1}
-                        color={i < 3 ? 'bg-gradient-to-r from-primary to-cyan-500' : 'bg-muted-foreground/30'}
+                    </div>
+                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-primary to-cyan-500 rounded-full transition-all"
+                        style={{ width: `${Math.min(100, (cat.count / (topCategories[0]?.count || 1)) * 100)}%` }}
                       />
                     </div>
-                  ))
-                )}
+                  </div>
+                ))}
               </CardContent>
             </Card>
 
-            {/* Quick Stats */}
+            {/* Fastest Rising */}
             <Card className="border-border/50">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Activity className="h-4 w-4" />
-                  Ecosystem Stats
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Total Products</span>
-                  <span className="font-semibold">{(trendingProducts.length + risingProducts.length + newProducts.length).toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Data Sources</span>
-                  <span className="font-semibold">15+</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">RSS Feeds</span>
-                  <span className="font-semibold">150+</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Updated</span>
-                  <span className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" />
-                    Daily
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Top Risers */}
-            <Card className="border-border/50">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-emerald-500" />
-                  Fastest Growing
+                  <Rocket className="h-4 w-4 text-emerald-500" />
+                  Fastest Rising
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {risingProducts.slice(0, 5).map((product, i) => (
                   <Link key={product.id} href={`/discover/${product.slug}`} className="flex items-center gap-3 group">
-                    <span className="text-sm font-bold text-muted-foreground w-5">{i + 1}</span>
+                    <span className={`text-sm font-bold w-5 ${i < 3 ? 'text-amber-500' : 'text-muted-foreground'}`}>
+                      {i + 1}
+                    </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium group-hover:text-primary transition-colors truncate">
                         {product.name}
                       </p>
                     </div>
-                    <GrowthIndicator value={product.weekly_growth_rate} />
+                    <GrowthBadge value={product.weekly_growth_rate || 0} />
                   </Link>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Most Viewed (by confidence) */}
+            <Card className="border-border/50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Eye className="h-4 w-4 text-blue-500" />
+                  Highest Confidence
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {trendingProducts
+                  .sort((a, b) => b.confidence_score - a.confidence_score)
+                  .slice(0, 5)
+                  .map((product, i) => (
+                    <Link key={product.id} href={`/discover/${product.slug}`} className="flex items-center gap-3 group">
+                      <span className="text-sm font-bold text-muted-foreground w-5">{i + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium group-hover:text-primary transition-colors truncate">
+                          {product.name}
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {product.confidence_score}%
+                      </Badge>
+                    </Link>
+                  ))}
+              </CardContent>
+            </Card>
+
+            {/* Ecosystem Stats */}
+            <Card className="border-border/50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Globe className="h-4 w-4" />
+                  Ecosystem
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {[
+                  { label: 'Total Products', value: '3,000+' },
+                  { label: 'Data Sources', value: '15+' },
+                  { label: 'RSS Feeds', value: '150+' },
+                  { label: 'Update Frequency', value: 'Daily' },
+                ].map((stat) => (
+                  <div key={stat.label} className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">{stat.label}</span>
+                    <span className="text-sm font-medium">{stat.value}</span>
+                  </div>
                 ))}
               </CardContent>
             </Card>
