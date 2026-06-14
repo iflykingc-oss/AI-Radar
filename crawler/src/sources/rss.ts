@@ -41,6 +41,14 @@ const RSS_FEEDS: Array<{ url: string; name: string }> = [
   { url: 'https://sspai.com/feed', name: '少数派' },
   { url: 'https://www.infoq.cn/feed', name: 'InfoQ中文' },
   { url: 'https://www.ruanyifeng.com/blog/atom.xml', name: '阮一峰周刊' },
+  { url: 'https://36kr.com/feed', name: '36氪' },
+  { url: 'https://www.leiphone.com/feed', name: '雷锋网' },
+  { url: 'https://www.pingwest.com/feed', name: '品玩' },
+  { url: 'https://www.geekpark.net/rss', name: '极客公园' },
+  { url: 'https://www.tmtpost.com/feed', name: '钛媒体' },
+  { url: 'https://www.ifanr.com/feed', name: '爱范儿' },
+  { url: 'https://www.niaogebiji.com/feed', name: '鸟哥笔记' },
+  { url: 'https://www.woshipm.com/feed', name: '人人都是产品经理' },
 
   // === Company Blogs ===
   { url: 'https://huggingface.co/blog/feed.xml', name: 'HuggingFace Blog' },
@@ -78,10 +86,45 @@ const RSS_FEEDS: Array<{ url: string; name: string }> = [
   { url: 'https://wandb.ai/site/rss.xml', name: 'Weights & Biases' },
   { url: 'https://www.bensbites.com/feed', name: "Ben's Bites" },
   { url: 'https://every.to/chain-of-thought/feed.xml', name: 'Chain of Thought' },
+  { url: 'https://buttondown.email/ainews/rss', name: 'AI News' },
+  { url: 'https://www.emergentmind.com/feed', name: 'Emergent Mind' },
+  { url: 'https://blog.research.google/feeds/posts/default?alt=rss', name: 'Google AI Blog' },
+  { url: 'https://openai.com/blog/rss.xml', name: 'OpenAI Blog' },
+  { url: 'https://www.anthropic.com/feed/rss.xml', name: 'Anthropic Blog' },
+  { url: 'https://ai.meta.com/blog/rss/', name: 'Meta AI Blog' },
+  { url: 'https://blogs.microsoft.com/ai/feed/', name: 'Microsoft AI Blog' },
+  { url: 'https://stability.ai/blog/rss.xml', name: 'Stability AI Blog' },
+  { url: 'https://www.cursor.com/blog/rss.xml', name: 'Cursor Blog' },
+  { url: 'https://replit.com/blog/rss.xml', name: 'Replit Blog' },
+  { url: 'https://www.perplexity.ai/hub/feed', name: 'Perplexity Hub' },
 
   // === Product & Community ===
   { url: 'https://www.producthunt.com/feed', name: 'Product Hunt' },
   { url: 'https://www.ruanyifeng.com/blog/atom.xml', name: '阮一峰周刊' },
+
+  // === AI Tool Directories & Aggregators ===
+  { url: 'https://theresanaiforthat.com/feed/', name: "There's An AI For That" },
+  { url: 'https://www.futurepedia.io/feed', name: 'Futurepedia' },
+  { url: 'https://aitoolnet.com/feed', name: 'AI Tool Net' },
+  { url: 'https://www.toolify.ai/feed', name: 'Toolify' },
+  { url: 'https://topai.tools/feed', name: 'TopAI Tools' },
+  { url: 'https://www.aitools.fyi/feed', name: 'AI Tools FYI' },
+  { url: 'https://www.aixploria.com/feed/', name: 'Aixploria' },
+  { url: 'https://dang.ai/feed', name: 'Dang.ai' },
+  { url: 'https://www.futuretools.io/feed', name: 'FutureTools' },
+  { url: 'https://aitoolsclub.com/feed/', name: 'AI Tools Club' },
+
+  // === More AI Research & Industry ===
+  { url: 'https://ai.googleblog.com/feeds/posts/default?alt=rss', name: 'Google AI Blog' },
+  { url: 'https://blog.openai.com/rss/', name: 'OpenAI Blog' },
+  { url: 'https://www.anthropic.com/rss.xml', name: 'Anthropic' },
+  { url: 'https://huggingface.co/blog/feed.xml', name: 'HuggingFace Blog' },
+  { url: 'https://replicate.com/blog/rss.xml', name: 'Replicate Blog' },
+  { url: 'https://together.ai/blog/rss.xml', name: 'Together AI Blog' },
+  { url: 'https://www.rungalileo.io/blog/rss.xml', name: 'Galileo Blog' },
+  { url: 'https://arxiv.org/rss/cs.AI', name: 'arXiv CS.AI' },
+  { url: 'https://arxiv.org/rss/cs.CL', name: 'arXiv CS.CL (NLP)' },
+  { url: 'https://arxiv.org/rss/cs.LG', name: 'arXiv CS.LG (ML)' },
 ];
 
 /**

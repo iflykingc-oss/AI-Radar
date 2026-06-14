@@ -26,6 +26,7 @@ import { RedditSource } from './sources/reddit.js';
 import { OSSInsightSource } from './sources/ossinsight.js';
 import { HuggingFaceSource } from './sources/huggingface.js';
 import { TelegramSource } from './sources/telegram.js';
+import { AIHotSource } from './sources/aihot.js';
 import { deduplicate } from './pipeline/dedup.js';
 import { enrich } from './pipeline/enrich.js';
 import { scoreProducts } from './pipeline/score.js';
@@ -60,6 +61,7 @@ function initializeSources(): DataSource[] {
     new OSSInsightSource(),
     new HuggingFaceSource(),
     new TelegramSource(),
+    new AIHotSource(),
   ];
 }
 
