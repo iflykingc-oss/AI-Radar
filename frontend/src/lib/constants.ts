@@ -1,24 +1,70 @@
-export const SORT_OPTIONS = [
-  { value: 'recent', label: 'Most Recent' },
-  { value: 'confidence', label: 'Highest Confidence' },
-  { value: 'name', label: 'Name A-Z' },
-  { value: 'stars', label: 'Most Stars' },
-] as const;
+/**
+ * Shared constants for AI Radar
+ * Used across ProductCard, ProductDetail, and Discover page
+ */
 
 export const CATEGORIES = [
-  'AI Writing',
+  'LLM',
+  'Image Generation',
+  'Video Generation',
+  'Speech/Audio',
+  'AI Agents',
   'AI Coding',
-  'AI Design',
-  'AI Video',
-  'AI Audio',
-  'AI Data Analysis',
-  'AI Agent',
-  'AI Infrastructure',
-  'AI API',
-  'AI Model',
   'AI Search',
-  'AI Marketing',
+  'AI Framework',
+  'AI Platform',
+  'MLOps',
+  'Computer Vision',
+  'NLP',
+  'Robotics',
+  'Other',
 ] as const;
+
+export type Category = typeof CATEGORIES[number];
+
+export const PRICING_MODELS = [
+  { value: 'free', label: 'Free', icon: '🆓', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+  { value: 'freemium', label: 'Freemium', icon: '🆓💎', color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
+  { value: 'paid', label: 'Paid', icon: '💰', color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400' },
+  { value: 'open_source', label: 'Open Source', icon: '📦', color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400' },
+] as const;
+
+export type PricingModel = typeof PRICING_MODELS[number]['value'];
+
+export const STATUS_OPTIONS = [
+  { value: 'active', label: 'Active', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+  { value: 'low_active', label: 'Low Active', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
+  { value: 'inactive', label: 'Inactive', color: 'bg-red-500/10 text-red-600 dark:text-red-400' },
+  { value: 'dead', label: 'Dead', color: 'bg-gray-500/10 text-gray-600 dark:text-gray-400' },
+] as const;
+
+export type AvailabilityStatus = typeof STATUS_OPTIONS[number]['value'];
+
+export const CONFIDENCE_LEVELS = [
+  { value: 'high', label: 'High (80+)', color: 'bg-emerald-500/10 text-emerald-600' },
+  { value: 'medium', label: 'Medium (50-79)', color: 'bg-amber-500/10 text-amber-600' },
+  { value: 'low', label: 'Low (<50)', color: 'bg-red-500/10 text-red-600' },
+] as const;
+
+export type ConfidenceLevel = typeof CONFIDENCE_LEVELS[number]['value'];
+
+export const SORT_OPTIONS = [
+  { value: 'recent', label: 'Newest First' },
+  { value: 'confidence', label: 'Highest Score' },
+  { value: 'stars', label: 'Most Stars' },
+  { value: 'name', label: 'Alphabetical' },
+] as const;
+
+export type SortOption = typeof SORT_OPTIONS[number]['value'];
+
+export const TIME_RANGES = [
+  { value: '7d', label: 'Last 7 days' },
+  { value: '30d', label: 'Last 30 days' },
+  { value: '90d', label: 'Last 90 days' },
+  { value: 'all', label: 'All time' },
+] as const;
+
+export type TimeRange = typeof TIME_RANGES[number]['value'];
 
 export const REGIONS = [
   'Global',
@@ -28,13 +74,6 @@ export const REGIONS = [
   'China',
   'India',
   'Latin America',
-] as const;
-
-export const PRICING_MODELS = [
-  'free',
-  'freemium',
-  'paid',
-  'open_source',
 ] as const;
 
 export const PRICING_TIERS = [
@@ -127,3 +166,66 @@ export const FAQ_DATA = [
       'Absolutely! You can set up notifications via Feishu, DingTalk, WeCom, Slack, Telegram, Discord, or Microsoft Teams. Customize your notification frequency (real-time, daily digest, or weekly summary) and choose what types of updates you want to receive.',
   },
 ];
+
+/**
+ * Get status config by status key
+ */
+export function getStatusConfig(status: string) {
+  return STATUS_OPTIONS.find(s => s.value === status) || STATUS_OPTIONS[0];
+}
+
+/**
+ * Get pricing config by pricing key
+ */
+export function getPricingConfig(pricing: string) {
+  return PRICING_MODELS.find(p => p.value === pricing) || PRICING_MODELS[0];
+}
+
+/**
+ * Source icons mapping
+ */
+export const SOURCE_ICONS: Record<string, string> = {
+  rss: '📰',
+  aihot: '🔥',
+  twitter: '🐦',
+  bluesky: '🦋',
+  reddit: '🤖',
+  hackernews: '🟠',
+  github: '🐙',
+  producthunt: '🚀',
+  npm: '📦',
+  huggingface: '🤗',
+  arxiv: '📄',
+  devto: '👩‍💻',
+  lobsters: '🦞',
+  telegram: '✈️',
+  ossinsight: '📊',
+};
+
+/**
+ * Source colors mapping
+ */
+export const SOURCE_COLORS: Record<string, string> = {
+  rss: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  aihot: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
+  twitter: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
+  bluesky: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+  reddit: 'bg-red-500/10 text-red-600 dark:text-red-400',
+  hackernews: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  github: 'bg-gray-500/10 text-gray-600 dark:text-gray-400',
+  producthunt: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+};
+
+/**
+ * Get source icon
+ */
+export function getSourceIcon(source: string): string {
+  return SOURCE_ICONS[source] || '📰';
+}
+
+/**
+ * Get source color
+ */
+export function getSourceColor(source: string): string {
+  return SOURCE_COLORS[source] || 'bg-muted text-muted-foreground';
+}

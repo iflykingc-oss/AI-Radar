@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Bookmark, ExternalLink, Github, Star, ArrowUpRight } from 'lucide-react';
 import { getConfidenceLevel, formatConfidenceScore } from '@/lib/utils';
+import { getStatusConfig, getPricingConfig } from '@/lib/constants';
 import { LoginModal } from '@/components/auth/LoginModal';
 import { useTranslations } from 'next-intl';
 
@@ -29,20 +30,6 @@ interface ProductCardProps {
   is_in_watchlist?: boolean;
   content_type?: string;
 }
-
-const statusConfig: Record<string, { label: string; color: string }> = {
-  active: { label: 'Active', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
-  low_active: { label: 'Low Active', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
-  inactive: { label: 'Inactive', color: 'bg-red-500/10 text-red-600 dark:text-red-400' },
-  dead: { label: 'Dead', color: 'bg-gray-500/10 text-gray-600 dark:text-gray-400' },
-};
-
-const pricingConfig: Record<string, { label: string; color: string }> = {
-  free: { label: 'Free', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
-  freemium: { label: 'Freemium', color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
-  paid: { label: 'Paid', color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400' },
-  open_source: { label: 'Open Source', color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400' },
-};
 
 export default function ProductCard({
   id,
@@ -67,8 +54,8 @@ export default function ProductCard({
 
   const confidence = getConfidenceLevel(confidence_score);
   const scoreClass = confidence === 'high' ? 'score-high' : confidence === 'medium' ? 'score-medium' : 'score-low';
-  const status = statusConfig[availability_status] || statusConfig.active;
-  const pricing = pricingConfig[pricing_model || 'free'];
+  const status = getStatusConfig(availability_status);
+  const pricing = getPricingConfig(pricing_model || 'free');
 
   const handleWatchlistToggle = async (e: React.MouseEvent) => {
     e.preventDefault();

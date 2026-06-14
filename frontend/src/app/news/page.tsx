@@ -22,6 +22,7 @@ import {
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { getSourceIcon, getSourceColor } from '@/lib/constants';
 
 interface NewsItem {
   id: string;
@@ -36,24 +37,6 @@ interface NewsItem {
   created_at: string;
   confidence_score: number;
 }
-
-const sourceIcons: Record<string, string> = {
-  rss: '📰',
-  aihot: '🔥',
-  twitter: '🐦',
-  bluesky: '🦋',
-  reddit: '🤖',
-  hackernews: '🟠',
-};
-
-const sourceColors: Record<string, string> = {
-  rss: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-  aihot: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
-  twitter: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
-  bluesky: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
-  reddit: 'bg-red-500/10 text-red-600 dark:text-red-400',
-  hackernews: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-};
 
 const categoryIcons: Record<string, React.ReactNode> = {
   'LLM': <Zap className="h-4 w-4" />,
@@ -279,8 +262,8 @@ export default function NewsPage() {
                 <div className="bg-card rounded-xl border border-border/50 p-5 transition-all hover:border-primary/30 hover:shadow-md">
                   <div className="flex items-start gap-4">
                     {/* Source Icon */}
-                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 text-lg ${sourceColors[item.source] || 'bg-muted'}`}>
-                      {sourceIcons[item.source] || '📰'}
+                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 text-lg ${getSourceColor(item.source)}`}>
+                      {getSourceIcon(item.source)}
                     </div>
 
                     {/* Content */}
