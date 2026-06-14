@@ -115,8 +115,8 @@ export async function upsertProducts(
     console.error(
       `[store] Error checking existing products: ${fetchError.message}`
     );
-    // Fallback: try to insert all and let the database handle conflicts
-    return await bulkInsert(supabase, products);
+    // Fallback: try to upsert all and let the database handle conflicts
+    return await bulkUpsert(supabase, products);
   }
 
   const existingSlugSet = new Set(existingRows?.map((r) => r.slug) ?? []);
@@ -138,30 +138,12 @@ export async function upsertProducts(
     }
   }
 
-  // Batch insert new products
-  if (toInsert.length > 0) {
-    const insertResult = await bulkInsert(supabase, toInsert);
-    inserted = insertResult.inserted;
-  }
-
-  // Batch update existing products
-  for (const { id, product } of toUpdate) {
-    const row = toProductRow(product);
-    const { error } = await supabase
-      .from(TABLE_NAME)
-      .update({
-        ...row,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id);
-
-    if (error) {
-      console.error(
-        `[store] Error updating product "${product.name}": ${error.message}`
-      );
-    } else {
-      updated++;
-    }
+  // Combine all products and use bulk upsert
+  const allProducts = [...toInsert, ...toUpdate.map(({ product }) => product)];
+  if (allProducts.length > 0) {
+    const upsertResult = await bulkUpsert(supabase, allProducts);
+    inserted = upsertResult.inserted;
+    updated = upsertResult.updated;
   }
 
   console.log(`[store] Upsert complete: ${inserted} inserted, ${updated} updated.`);
@@ -169,33 +151,39 @@ export async function upsertProducts(
 }
 
 /**
- * Bulk insert products into the database.
+ * Bulk upsert products into the database.
+ * Processes in batches to avoid timeout.
  */
-async function bulkInsert(
+async function bulkUpsert(
   supabase: SupabaseClient,
   products: ScoredProduct[]
 ): Promise<{ inserted: number; updated: number }> {
-  const rows = products.map((p) => ({
-    ...toProductRow(p),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  }));
+  const BATCH_SIZE = 500;
+  let inserted = 0;
+  let updated = 0;
 
-  // Use upsert with slug as conflict key to handle duplicates gracefully
-  const { data, error } = await supabase
-    .from(TABLE_NAME)
-    .upsert(rows, { onConflict: 'slug', ignoreDuplicates: false })
-    .select();
+  for (let i = 0; i < products.length; i += BATCH_SIZE) {
+    const batch = products.slice(i, i + BATCH_SIZE);
+    const rows = batch.map((p) => ({
+      ...toProductRow(p),
+      updated_at: new Date().toISOString(),
+    }));
 
-  if (error) {
-    console.error(
-      `[store] Error upserting ${products.length} products: ${error.message}`
-    );
-    return { inserted: 0, updated: 0 };
+    const { data, error } = await supabase
+      .from(TABLE_NAME)
+      .upsert(rows, { onConflict: 'slug', ignoreDuplicates: false })
+      .select();
+
+    if (error) {
+      console.error(`[store] Batch upsert error (batch ${Math.floor(i / BATCH_SIZE) + 1}): ${error.message}`);
+    } else {
+      const count = data?.length ?? 0;
+      inserted += count;
+      console.log(`[store] Batch ${Math.floor(i / BATCH_SIZE) + 1}: upserted ${count} products`);
+    }
   }
 
-  console.log(`[store] Upserted ${data?.length ?? 0} products.`);
-  return { inserted: data?.length ?? 0, updated: 0 };
+  return { inserted, updated };
 }
 
 /**
