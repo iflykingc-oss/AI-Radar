@@ -10,6 +10,7 @@ import { PageTransition } from '@/components/transitions/PageTransition';
 import { ToastProvider } from '@/hooks/useToast';
 import { ToastViewport } from '@/components/ui/Toast';
 import ScrollToTop from '@/components/ScrollToTop';
+import KeyboardShortcutsProvider from '@/components/KeyboardShortcutsProvider';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -56,19 +57,21 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <ToastProvider>
-              <ErrorBoundary>
-                <div className="flex min-h-screen flex-col">
-                  <Navbar />
-                  <main className="flex-1">
-                    <PageTransition>{children}</PageTransition>
-                  </main>
-                  <Footer />
-                </div>
-              </ErrorBoundary>
-              <ScrollToTop />
-              <ToastViewport />
-            </ToastProvider>
+            <KeyboardShortcutsProvider>
+              <ToastProvider>
+                <ErrorBoundary>
+                  <div className="flex min-h-screen flex-col">
+                    <Navbar />
+                    <main className="flex-1">
+                      <PageTransition>{children}</PageTransition>
+                    </main>
+                    <Footer />
+                  </div>
+                </ErrorBoundary>
+                <ScrollToTop />
+                <ToastViewport />
+              </ToastProvider>
+            </KeyboardShortcutsProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>
