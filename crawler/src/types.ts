@@ -52,6 +52,18 @@ export interface ScoredProduct extends CrawledProduct {
   confidence_score: number;
   /** Array of source names that mentioned this product */
   source_mentions: string[];
+  /** Number of data sources that mentioned this product */
+  source_count?: number;
+  /** Weekly growth rate (percentage) */
+  weekly_growth_rate?: number;
+  /** Monthly growth rate (percentage) */
+  monthly_growth_rate?: number;
+  /** Validation signals from GitHub etc. */
+  validation_signals?: Record<string, any>;
+  /** Record creation timestamp */
+  created_at?: string;
+  /** Record update timestamp */
+  updated_at?: string;
 }
 
 /**
