@@ -77,7 +77,7 @@ export function isAIRelated(name: string, description: string, tags: string[]): 
 
   // Check for non-AI keywords first (strong negative signal)
   const nonAICount = NON_AI_KEYWORDS.filter(kw => text.includes(kw)).length;
-  if (nonAICount >= 2) {
+  if (nonAICount >= 3) {
     // Multiple non-AI keywords = likely not AI content
     return false;
   }
@@ -92,9 +92,31 @@ export function isAIRelated(name: string, description: string, tags: string[]): 
   if (aiCount >= 1 && nonAICount === 0) return true;
 
   // Check if tags contain AI-related terms
-  const aiTags = ['ai', 'ml', 'llm', 'gpt', 'claude', 'gemini', 'machine learning', 'deep learning'];
+  const aiTags = ['ai', 'ml', 'llm', 'gpt', 'claude', 'gemini', 'machine learning', 'deep learning', 'neural', 'model'];
   const hasAITag = tags.some(tag => aiTags.some(ai => tag.toLowerCase().includes(ai)));
   if (hasAITag) return true;
+
+  // Check for common AI patterns in title
+  const aiPatterns = [
+    /\bllm\b/i,
+    /\bgpt\b/i,
+    /\bai\b/i,
+    /\bml\b/i,
+    /\bmodel\b/i,
+    /\bneural\b/i,
+    /\btransformer\b/i,
+    /\bembedding\b/i,
+    /\bvector\b/i,
+    /\brag\b/i,
+    /\bagent\b/i,
+    /\bfine.?tun/i,
+    /\binference\b/i,
+    /\btraining\b/i,
+    /\bbenchmark\b/i,
+  ];
+
+  const hasAIPattern = aiPatterns.some(p => p.test(name) || p.test(description));
+  if (hasAIPattern) return true;
 
   // Default: not AI-related
   return false;
