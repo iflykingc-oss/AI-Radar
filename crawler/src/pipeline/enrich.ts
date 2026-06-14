@@ -11,6 +11,7 @@
  */
 import { CrawledProduct } from '../types.js';
 import { classify } from './classifier.js';
+import { isAIRelated } from './ai-relevance.js';
 
 /**
  * Maximum length for the description field.
@@ -24,15 +25,27 @@ const MAX_DESCRIPTION_LENGTH = 500;
  * @returns Enriched products (same array reference, mutated in place)
  */
 export function enrich(products: CrawledProduct[]): CrawledProduct[] {
+  const filtered: CrawledProduct[] = [];
+
   for (const product of products) {
+    // Filter out non-AI content
+    if (!isAIRelated(product.name, product.description, product.tags)) {
+      console.log(`[enrich] Filtered out non-AI content: "${product.name}"`);
+      continue;
+    }
+
     enrichSlug(product);
     enrichName(product);
     enrichDescription(product);
     enrichContentType(product);
     enrichCategory(product);
     enrichTags(product);
+
+    filtered.push(product);
   }
-  return products;
+
+  console.log(`[enrich] AI relevance filter: ${products.length} → ${filtered.length} products`);
+  return filtered;
 }
 
 /**

@@ -20,7 +20,10 @@ export async function GET(request: Request) {
 
     // Filter by content type (product or news)
     if (contentType === 'product') {
+      // Only show products, exclude news and non-AI content
       query = query.or('content_type.eq.product,content_type.is.null');
+      // Also filter out items with clearly non-AI categories
+      query = query.not('category', 'in', '("Business","Finance","Politics","Sports","Entertainment")');
     } else if (contentType === 'news') {
       query = query.eq('content_type', 'news');
     }

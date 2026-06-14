@@ -164,9 +164,11 @@ async function bulkUpsert(
 
   for (let i = 0; i < products.length; i += BATCH_SIZE) {
     const batch = products.slice(i, i + BATCH_SIZE);
+    const now = new Date().toISOString();
     const rows = batch.map((p) => ({
       ...toProductRow(p),
-      updated_at: new Date().toISOString(),
+      created_at: p.created_at || now,  // Preserve original created_at or use current time
+      updated_at: now,
     }));
 
     const { data, error } = await supabase
