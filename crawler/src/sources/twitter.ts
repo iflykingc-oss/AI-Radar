@@ -149,17 +149,17 @@ export class TwitterSource implements DataSource {
   /**
    * Fetch tweets via RSSHub Twitter route.
    * Route: /twitter/user/:id
+   * Uses parallel requests for speed.
    */
   private async fetchViaRSSHub(): Promise<CrawledProduct[]> {
     const products: CrawledProduct[] = [];
 
-    for (const account of AI_ACCOUNTS) {
+    // Fetch all accounts in parallel
+    const promises = AI_ACCOUNTS.map(async (account) => {
       try {
         const url = `${RSSHUB_URL}/twitter/user/${account.handle}`;
-        console.log(`[${this.name}] RSSHub: Fetching @${account.handle}...`);
-
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
+        const timeout = setTimeout(() => controller.abort(), 10000);
         const headers: Record<string, string> = {
           'Accept': 'application/rss+xml, application/xml, text/xml',
         };
@@ -169,23 +169,29 @@ export class TwitterSource implements DataSource {
         const response = await fetch(url, { signal: controller.signal, headers });
         clearTimeout(timeout);
 
-        if (!response.ok) {
-          console.warn(`[${this.name}] RSSHub failed for @${account.handle}: HTTP ${response.status}`);
-          continue;
-        }
+        if (!response.ok) return [];
 
         const xmlText = await response.text();
         const items = this.parseItems(xmlText);
+        const accountProducts: CrawledProduct[] = [];
 
         for (const item of items.slice(0, MAX_PER_ACCOUNT)) {
           const product = this.extractProductFromTweet(item, account);
           if (product) {
-            products.push(product);
+            accountProducts.push(product);
           }
         }
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(`[${this.name}] RSSHub error for @${account.handle}: ${message}`);
+
+        return accountProducts;
+      } catch {
+        return [];
+      }
+    });
+
+    const results = await Promise.allSettled(promises);
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        products.push(...result.value);
       }
     }
 
@@ -241,51 +247,58 @@ export class TwitterSource implements DataSource {
   /**
    * Fetch tweets via Nitter RSS feeds.
    * Nitter is an open-source Twitter front-end that provides RSS feeds.
+   * Uses parallel requests for speed.
    */
   private async fetchViaNitter(): Promise<CrawledProduct[]> {
     const products: CrawledProduct[] = [];
 
-    // Only check a subset of accounts to avoid rate limiting
-    const accountsToCheck = AI_ACCOUNTS.slice(0, 15);
+    // Only check a subset of accounts to avoid rate limiting and timeout
+    const accountsToCheck = AI_ACCOUNTS.slice(0, 8);
 
     for (const instance of NITTER_INSTANCES) {
       if (products.length >= 20) break;
 
-      for (const account of accountsToCheck) {
+      // Fetch all accounts in parallel for this instance
+      const promises = accountsToCheck.map(async (account) => {
         try {
           const url = `${instance}/${account.handle}/rss`;
-          console.log(`[${this.name}] Nitter: Fetching @${account.handle} from ${instance}...`);
-
           const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 10000);
+          const timeout = setTimeout(() => controller.abort(), 8000);
           const response = await fetch(url, {
             signal: controller.signal,
             headers: { 'Accept': 'application/rss+xml, application/xml, text/xml' },
           });
           clearTimeout(timeout);
 
-          if (!response.ok) {
-            continue;
-          }
+          if (!response.ok) return [];
 
           const xmlText = await response.text();
           const items = this.parseItems(xmlText);
+          const accountProducts: CrawledProduct[] = [];
 
-          for (const item of items.slice(0, 5)) {
+          for (const item of items.slice(0, 3)) {
             const product = this.extractProductFromTweet(item, account);
             if (product) {
-              products.push(product);
+              accountProducts.push(product);
             }
           }
 
-          // If we got results from this instance, use it
-          if (products.length > 0) {
-            console.log(`[${this.name}] Nitter instance ${instance} works!`);
-            break;
-          }
+          return accountProducts;
         } catch {
-          // Try next instance
+          return [];
         }
+      });
+
+      const results = await Promise.allSettled(promises);
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          products.push(...result.value);
+        }
+      }
+
+      if (products.length > 0) {
+        console.log(`[${this.name}] Nitter instance ${instance} returned ${products.length} products`);
+        break;
       }
     }
 
