@@ -28,6 +28,8 @@ export interface CrawledProduct {
   tags: string[];
   /** High-level category (e.g. "LLM", "Image Generation", "Dev Tools") */
   category: string;
+  /** Content type: 'product' for tools/apps, 'news' for industry news */
+  content_type?: 'product' | 'news';
   /** Which data source discovered this product */
   source: 'producthunt' | 'github' | 'hackernews' | 'rss' | 'aihot' | 'arxiv' | 'devto' | 'lobsters' | 'npm' | 'reddit' | 'ossinsight' | 'huggingface' | 'telegram' | 'twitter' | 'bluesky';
   /** Original URL where the product was found */
@@ -84,6 +86,7 @@ export interface ProductRow {
   logo_url?: string;
   category?: string;
   subcategory?: string;
+  content_type?: string; // 'product' | 'news'
   tags?: string[];
   tech_stack?: string[];
   pricing_model?: string;

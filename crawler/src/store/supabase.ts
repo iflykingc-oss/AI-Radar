@@ -213,6 +213,7 @@ function toProductRow(product: ScoredProduct): ProductRow {
     github_url: product.github_url,
     tags: product.tags,
     category: product.category,
+    content_type: product.content_type || 'product',
     pricing_model: product.pricing_model,
     github_stars: product.github_stars,
     confidence_score: product.confidence_score,
