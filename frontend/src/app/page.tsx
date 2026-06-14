@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Search,
   AlertTriangle,
@@ -20,6 +19,10 @@ import {
   ArrowRight,
   ExternalLink,
   Star,
+  Zap,
+  Globe,
+  TrendingUp,
+  ArrowUpRight,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { getConfidenceLevel, formatConfidenceScore } from '@/lib/utils';
@@ -51,6 +54,7 @@ interface ProductDemo {
   github_url: string | null;
   github_stars: number | null;
   tags: string[];
+  logo_url?: string | null;
 }
 
 export default function LandingPage() {
@@ -72,97 +76,126 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Section 1: Hero */}
-      <section className="relative overflow-hidden gradient-animate py-20 lg:py-32">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 dot-pattern opacity-50" />
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
+      {/* Hero Section */}
+      <section className="hero-section relative py-20 lg:py-32 overflow-hidden">
+        <div className="absolute inset-0 grid-pattern opacity-50" />
+        <div className="absolute top-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-[100px]" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-500/5 rounded-full blur-[100px]" />
 
-        <div className="container mx-auto px-4 text-center relative">
-          <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm border-primary/20 bg-background/50">
+        <div className="container-custom relative text-center">
+          <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm border-primary/20 bg-background/80 backdrop-blur-sm">
+            <Zap className="h-3.5 w-3.5 mr-1.5 text-primary" />
             {t('hero_badge')}
           </Badge>
-          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight max-w-5xl mx-auto leading-tight">
+
+          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight max-w-5xl mx-auto leading-[1.1]">
             {t('hero_title_1')}{' '}
             <span className="gradient-text">{t('hero_title_2')}</span>
           </h1>
+
           <p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             {t('hero_desc')}
           </p>
+
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="px-8 py-6 text-lg rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-shadow" asChild>
-              <Link href="/discover">{t('cta_free')}</Link>
+            <Button size="lg" className="btn-gradient px-8 h-12 text-base rounded-full" asChild>
+              <Link href="/discover">
+                {t('cta_free')}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
-            <Button variant="outline" size="lg" className="px-8 py-6 text-lg rounded-full bg-background/50">
-              {t('cta_demo')} <ArrowRight className="ml-2 h-5 w-5" />
+            <Button variant="outline" size="lg" className="px-8 h-12 text-base rounded-full bg-background/80 backdrop-blur-sm">
+              {t('cta_demo')}
             </Button>
           </div>
-          <div className="mt-14 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground">
+
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
             {[
-              t('feature_free'),
-              t('feature_accuracy'),
-              t('feature_free_plan'),
+              { icon: <Globe className="h-4 w-4" />, text: t('feature_free') },
+              { icon: <Shield className="h-4 w-4" />, text: t('feature_accuracy') },
+              { icon: <Zap className="h-4 w-4" />, text: t('feature_free_plan') },
             ].map((feat, i) => (
               <div key={i} className="flex items-center gap-2">
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-success/10">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  {feat.icon}
                 </div>
-                <span>{feat}</span>
+                <span>{feat.text}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Section 2: Pain Points */}
-      <section className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-14">
+      {/* Metrics Banner */}
+      <section className="border-y border-border/50 bg-muted/30">
+        <div className="container-custom py-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {[
+              { value: '3,000+', label: t('metrics_label_tracked'), icon: <Globe className="h-5 w-5" /> },
+              { value: '150+', label: t('metrics_label_daily'), icon: <TrendingUp className="h-5 w-5" /> },
+              { value: '15+', label: 'Data Sources', icon: <Layers className="h-5 w-5" /> },
+              { value: '98%', label: t('metrics_accuracy'), icon: <Shield className="h-5 w-5" /> },
+            ].map((stat, i) => (
+              <div key={i} className="text-center">
+                <div className="flex justify-center mb-2 text-primary">
+                  {stat.icon}
+                </div>
+                <div className="text-2xl sm:text-3xl font-bold gradient-text">{stat.value}</div>
+                <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pain Points */}
+      <section className="section bg-muted/30">
+        <div className="container-custom">
+          <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold">
               {t('pain_title')}
             </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
+            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
               {t('pain_subtitle')}
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto stagger">
             {[
               {
-                icon: <Search className="h-8 w-8" />,
+                icon: <Search className="h-6 w-6" />,
                 title: t('pain_scattered_title'),
                 desc: t('pain_scattered_desc'),
-                color: 'from-blue-500/10 to-cyan-500/10',
+                gradient: 'from-blue-500 to-cyan-500',
               },
               {
-                icon: <AlertTriangle className="h-8 w-8" />,
+                icon: <AlertTriangle className="h-6 w-6" />,
                 title: t('pain_dead_title'),
                 desc: t('pain_dead_desc'),
-                color: 'from-amber-500/10 to-orange-500/10',
+                gradient: 'from-amber-500 to-orange-500',
               },
               {
-                icon: <Layers className="h-8 w-8" />,
+                icon: <Layers className="h-6 w-6" />,
                 title: t('pain_messy_title'),
                 desc: t('pain_messy_desc'),
-                color: 'from-purple-500/10 to-pink-500/10',
+                gradient: 'from-purple-500 to-pink-500',
               },
             ].map((item, i) => (
-              <Card key={i} className="text-center p-8 card-hover border-0 bg-gradient-to-br ${item.color}">
-                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-lg shadow-primary/10">
+              <div key={i} className="bg-card rounded-xl border border-border/50 p-6 text-center card-hover">
+                <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${item.gradient} text-white mb-4 shadow-lg`}>
                   {item.icon}
                 </div>
-                <h3 className="text-xl font-semibold">{item.title}</h3>
-                <p className="mt-3 text-muted-foreground leading-relaxed">{item.desc}</p>
-              </Card>
+                <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Section 3: Core Features */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-14">
+      {/* Core Features */}
+      <section className="section">
+        <div className="container-custom">
+          <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold">
               {t('features_title')}
             </h2>
@@ -194,133 +227,51 @@ export default function LandingPage() {
                 gradient: 'from-purple-500 to-pink-500',
               },
             ].map((feature, i) => (
-              <Card key={i} className="p-6 card-hover border-0 shadow-sm">
-                <div className="flex items-start gap-4">
-                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${feature.gradient} text-white shadow-lg`}>
-                    {feature.icon}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">{feature.title}</h3>
-                    <p className="mt-2 text-muted-foreground leading-relaxed">{feature.desc}</p>
-                  </div>
+              <div key={i} className="flex items-start gap-4 bg-card rounded-xl border border-border/50 p-5 card-hover">
+                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${feature.gradient} text-white shadow-sm`}>
+                  {feature.icon}
                 </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Section 4: 4D Verification */}
-      <section className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-            {t('verification_title')}
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-14">
-            {t('verification_desc')}
-          </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto stagger">
-            {[
-              { label: t('ver_freshness_label'), desc: t('ver_freshness_desc'), gradient: 'from-blue-500 to-cyan-500' },
-              { label: t('ver_multi_label'), desc: t('ver_multi_desc'), gradient: 'from-emerald-500 to-teal-500' },
-              { label: t('ver_engagement_label'), desc: t('ver_engagement_desc'), gradient: 'from-amber-500 to-orange-500' },
-              { label: t('ver_technical_label'), desc: t('ver_technical_desc'), gradient: 'from-purple-500 to-pink-500' },
-            ].map((d, i) => (
-              <Card key={i} className="p-6 text-center card-hover border-0 shadow-sm">
-                <div className={`inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${d.gradient} text-white text-2xl font-bold shadow-lg mb-4`}>
-                  {i + 1}D
+                <div>
+                  <h3 className="font-semibold text-base">{feature.title}</h3>
+                  <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{feature.desc}</p>
                 </div>
-                <h3 className="font-semibold text-lg">{d.label}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{d.desc}</p>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Section 5: User Cases */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold">{t('users_title')}</h2>
-          </div>
-          <Tabs defaultValue="entrepreneur" className="max-w-4xl mx-auto">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="entrepreneur">{t('user_entrepreneur')}</TabsTrigger>
-              <TabsTrigger value="investor">{t('user_investor')}</TabsTrigger>
-              <TabsTrigger value="developer">{t('user_developer')}</TabsTrigger>
-            </TabsList>
-            <TabsContent value="entrepreneur" className="mt-6">
-              <Card className="p-8 border-0 shadow-sm">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-bold text-lg">
-                    L
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold mb-3">{t('user_entrepreneur_name')}</h3>
-                    <p className="text-muted-foreground leading-relaxed italic">
-                      &ldquo;{t('user_entrepreneur_quote')}&rdquo;
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </TabsContent>
-            <TabsContent value="investor" className="mt-6">
-              <Card className="p-8 border-0 shadow-sm">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-white font-bold text-lg">
-                    S
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold mb-3">{t('user_investor_name')}</h3>
-                    <p className="text-muted-foreground leading-relaxed italic">
-                      &ldquo;{t('user_investor_quote')}&rdquo;
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </TabsContent>
-            <TabsContent value="developer" className="mt-6">
-              <Card className="p-8 border-0 shadow-sm">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold text-lg">
-                    A
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold mb-3">{t('user_developer_name')}</h3>
-                    <p className="text-muted-foreground leading-relaxed italic">
-                      &ldquo;{t('user_developer_quote')}&rdquo;
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </section>
-
-      {/* Section 6: Metrics */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-cyan-500/5 to-purple-500/5" />
-        <div className="container mx-auto px-4 text-center relative">
-          <div className="grid sm:grid-cols-3 gap-8 max-w-3xl mx-auto stagger">
-            {[
-              { value: t('metrics_products_tracked'), label: t('metrics_label_tracked') },
-              { value: t('metrics_products_daily'), label: t('metrics_label_daily') },
-              { value: t('metrics_channels'), label: t('metrics_label_channels') },
-            ].map((stat, i) => (
-              <div key={i} className="p-6">
-                <div className="text-5xl font-extrabold gradient-text">{stat.value}</div>
-                <p className="mt-3 text-muted-foreground font-medium">{stat.label}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Section 6.5: Product Demo */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
+      {/* 4D Verification */}
+      <section className="section bg-muted/30">
+        <div className="container-custom text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+            {t('verification_title')}
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-12">
+            {t('verification_desc')}
+          </p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto stagger">
+            {[
+              { label: t('ver_freshness_label'), desc: t('ver_freshness_desc'), gradient: 'from-blue-500 to-cyan-500', icon: <Zap className="h-6 w-6" /> },
+              { label: t('ver_multi_label'), desc: t('ver_multi_desc'), gradient: 'from-emerald-500 to-teal-500', icon: <Globe className="h-6 w-6" /> },
+              { label: t('ver_engagement_label'), desc: t('ver_engagement_desc'), gradient: 'from-amber-500 to-orange-500', icon: <TrendingUp className="h-6 w-6" /> },
+              { label: t('ver_technical_label'), desc: t('ver_technical_desc'), gradient: 'from-purple-500 to-pink-500', icon: <Shield className="h-6 w-6" /> },
+            ].map((d, i) => (
+              <div key={i} className="bg-card rounded-xl border border-border/50 p-6 card-hover">
+                <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${d.gradient} text-white mb-4 shadow-sm`}>
+                  {d.icon}
+                </div>
+                <h3 className="font-semibold text-base mb-1">{d.label}</h3>
+                <p className="text-sm text-muted-foreground">{d.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Product Showcase */}
+      <section className="section">
+        <div className="container-custom">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold">{t('product_showcase_title')}</h2>
             <p className="mt-4 text-lg text-muted-foreground">
@@ -329,62 +280,59 @@ export default function LandingPage() {
           </div>
 
           {productsLoading ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl mx-auto">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-56 rounded-2xl bg-muted animate-pulse" />
+                <div key={i} className="h-48 rounded-xl bg-muted animate-pulse" />
               ))}
             </div>
           ) : topProducts.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto stagger">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl mx-auto stagger">
               {topProducts.map((product) => {
                 const confidence = getConfidenceLevel(product.confidence_score);
-                const confidenceColor = {
-                  high: 'bg-success/10 text-success border-success/20',
-                  medium: 'bg-warning/10 text-warning border-warning/20',
-                  low: 'bg-destructive/10 text-destructive border-destructive/20',
-                  unverified: 'bg-muted text-muted-foreground border-muted-foreground/20',
-                }[confidence];
+                const scoreClass = confidence === 'high' ? 'score-high' : confidence === 'medium' ? 'score-medium' : 'score-low';
 
                 return (
-                  <Card key={product.id} className="p-6 card-hover border-0 shadow-sm group">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">{product.name}</h3>
-                        <p className="text-sm text-muted-foreground mt-0.5">{product.category || 'AI'}</p>
+                  <Link key={product.id} href={`/discover/${product.slug}`} className="block group">
+                    <div className="bg-card rounded-xl border border-border/50 p-5 card-hover">
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center overflow-hidden shrink-0 border border-primary/10">
+                          {product.logo_url ? (
+                            <Image src={product.logo_url} alt={product.name} width={32} height={32} className="object-cover rounded-md" />
+                          ) : (
+                            <span className="text-lg font-bold text-primary">{product.name.charAt(0).toUpperCase()}</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-sm truncate group-hover:text-primary transition-colors">{product.name}</h3>
+                          <p className="text-xs text-muted-foreground">{product.category || 'AI'}</p>
+                        </div>
+                        <span className={`score-badge ${scoreClass} shrink-0`}>
+                          {formatConfidenceScore(product.confidence_score)}
+                        </span>
                       </div>
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold border ${confidenceColor}`}>
-                        {formatConfidenceScore(product.confidence_score)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
-                      {product.description || 'No description available'}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 mb-5">
-                      {(product.tags || []).slice(0, 3).map((tag) => (
-                        <span key={tag} className="inline-flex items-center rounded-full bg-primary/5 px-2.5 py-0.5 text-xs text-primary font-medium">
-                          {tag}
+                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-3">
+                        {product.description || 'No description available'}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {(product.tags || []).slice(0, 3).map((tag) => (
+                          <span key={tag} className="tag">{tag}</span>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                        <div className="flex items-center gap-2">
+                          {product.github_url && product.github_stars && product.github_stars > 0 && (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Star className="h-3 w-3" />
+                              {product.github_stars >= 1000 ? `${(product.github_stars / 1000).toFixed(1)}k` : product.github_stars}
+                            </span>
+                          )}
+                        </div>
+                        <span className="flex items-center gap-1 text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                          View <ArrowUpRight className="h-3 w-3" />
                         </span>
-                      ))}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 pt-4 border-t">
-                      {product.github_url && (
-                        <a href={product.github_url} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                          <Github className="h-4 w-4" />
-                        </a>
-                      )}
-                      {product.website_url && (
-                        <a href={product.website_url} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      )}
-                      {product.github_stars && product.github_stars > 0 && (
-                        <span className="text-xs text-muted-foreground flex items-center gap-1 ml-auto font-medium">
-                          <Star className="h-3.5 w-3.5" />
-                          {product.github_stars >= 1000 ? `${(product.github_stars / 1000).toFixed(1)}k` : product.github_stars}
-                        </span>
-                      )}
-                    </div>
-                  </Card>
+                  </Link>
                 );
               })}
             </div>
@@ -394,89 +342,105 @@ export default function LandingPage() {
             </div>
           )}
 
-          <div className="text-center mt-8">
-            <Button size="lg" asChild>
+          <div className="text-center mt-10">
+            <Button size="lg" variant="outline" className="rounded-full" asChild>
               <Link href="/discover">
-                {t('product_showcase_btn')} <ArrowRight className="ml-2 h-4 w-4" />
+                {t('product_showcase_btn')}
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Section 7: Pricing */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
+      {/* Pricing */}
+      <section className="section bg-muted/30">
+        <div className="container-custom">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold">{t('pricing_title')}</h2>
             <p className="mt-4 text-lg text-muted-foreground">{t('pricing_subtitle')}</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto stagger">
             {pricingTiers.map((tier) => (
-              <Card key={tier.name} className={`relative p-6 card-hover ${tier.popular ? 'border-primary ring-2 ring-primary shadow-lg shadow-primary/10' : 'border-0 shadow-sm'}`}>
+              <div
+                key={tier.name}
+                className={`bg-card rounded-xl border p-6 card-hover ${
+                  tier.popular ? 'border-primary shadow-lg ring-2 ring-primary/20' : 'border-border/50'
+                }`}
+              >
                 {tier.popular && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1">{t('pricing_most_popular')}</Badge>
+                  <Badge className="mb-4 bg-gradient-to-r from-primary to-cyan-600">
+                    {t('pricing_most_popular')}
+                  </Badge>
                 )}
-                <h3 className="text-xl font-semibold">{tier.name}</h3>
-                <div className="mt-4">
-                  <span className="text-4xl font-extrabold">{tier.price}</span>
-                  {tier.period && <span className="text-muted-foreground">{tier.period}</span>}
+                <h3 className="text-lg font-semibold">{tier.name}</h3>
+                <div className="mt-3 mb-1">
+                  <span className="text-3xl font-bold">{tier.price}</span>
+                  {tier.period && <span className="text-muted-foreground text-sm">{tier.period}</span>}
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground">{tier.description}</p>
-                <ul className="mt-6 space-y-3">
+                <p className="text-sm text-muted-foreground mb-5">{tier.description}</p>
+                <ul className="space-y-2.5 mb-6">
                   {tier.features.map((f, fi) => (
                     <li key={fi} className="flex items-start gap-2 text-sm">
-                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/10 mt-0.5">
-                        <CheckCircle2 className="h-3 w-3 text-success" />
-                      </div>
-                      {f}
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <span>{f}</span>
                     </li>
                   ))}
                 </ul>
-                <Button className="w-full mt-6 rounded-full" variant={tier.popular ? 'default' : 'outline'}>
+                <Button className="w-full rounded-full" variant={tier.popular ? 'default' : 'outline'}>
                   {tier.cta}
                 </Button>
-              </Card>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Section 8: FAQ + CTA */}
-      <section className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4 max-w-3xl">
-          <h2 className="text-3xl font-bold text-center mb-12">{t('faq_title')}</h2>
+      {/* FAQ */}
+      <section className="section">
+        <div className="container-custom max-w-3xl">
+          <h2 className="text-3xl font-bold text-center mb-10">{t('faq_title')}</h2>
           <div className="space-y-3">
             {faqItems.map((item, i) => (
-              <details key={i} className="group rounded-xl border bg-card p-5 [&_summary::-webkit-details-marker]:hidden shadow-sm">
-                <summary className="flex cursor-pointer items-center justify-between font-medium text-lg">
-                  {item.question}
+              <details key={i} className="group bg-card rounded-xl border border-border/50 overflow-hidden">
+                <summary className="flex cursor-pointer items-center justify-between p-5 font-medium hover:bg-muted/50 transition-colors">
+                  <span className="pr-4">{item.question}</span>
                   <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
                 </summary>
-                <p className="mt-3 text-muted-foreground leading-relaxed">{item.answer}</p>
+                <div className="px-5 pb-5 text-sm text-muted-foreground leading-relaxed">
+                  {item.answer}
+                </div>
               </details>
             ))}
           </div>
+        </div>
+      </section>
 
-          <div className="mt-16 text-center p-8 rounded-2xl bg-gradient-to-br from-primary/5 to-cyan-500/5 border border-primary/10">
-            <h3 className="text-2xl font-bold">{t('cta_title')}</h3>
-            <p className="mt-3 text-muted-foreground max-w-md mx-auto">
+      {/* CTA */}
+      <section className="section bg-muted/30">
+        <div className="container-custom text-center">
+          <div className="max-w-2xl mx-auto bg-gradient-to-br from-primary/5 to-cyan-500/5 rounded-2xl border border-primary/10 p-10">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3">{t('cta_title')}</h2>
+            <p className="text-muted-foreground mb-6">
               {t('cta_desc')}
             </p>
-            <Button size="lg" className="mt-6 px-8 rounded-full shadow-lg shadow-primary/25" asChild>
-              <Link href="/discover">{t('cta_button')}</Link>
+            <Button size="lg" className="btn-gradient rounded-full px-8" asChild>
+              <Link href="/discover">
+                {t('cta_button')}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-muted/30 py-14">
-        <div className="container mx-auto px-4">
+      <footer className="border-t bg-muted/30 py-12">
+        <div className="container-custom">
           <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-10">
             <div className="lg:col-span-1">
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-cyan-600 text-white font-bold text-sm">
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-cyan-600 text-white font-bold text-sm">
                   AI
                 </div>
                 <span className="font-bold text-lg">AI Radar</span>
@@ -508,27 +472,29 @@ export default function LandingPage() {
               ]},
             ].map((section) => (
               <div key={section.title}>
-                <h4 className="font-semibold mb-4">{section.title}</h4>
-                <ul className="space-y-3 text-sm text-muted-foreground">
+                <h4 className="font-semibold text-sm mb-4">{section.title}</h4>
+                <ul className="space-y-2.5">
                   {section.links.map((link) => (
                     <li key={link.label}>
-                      <Link href={link.href} className="hover:text-foreground transition-colors">{link.label}</Link>
+                      <Link href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                        {link.label}
+                      </Link>
                     </li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-between border-t pt-8 gap-4">
+          <div className="mt-10 pt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
               {t('footer_copyright', { year: new Date().getFullYear() })}
             </p>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-3">
               <a href="#" className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                <Twitter className="h-5 w-5" />
+                <Twitter className="h-4 w-4" />
               </a>
               <a href="#" className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                <Github className="h-5 w-5" />
+                <Github className="h-4 w-4" />
               </a>
             </div>
           </div>

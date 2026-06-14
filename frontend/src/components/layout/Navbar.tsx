@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { LoginModal } from '@/components/auth/LoginModal';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Radar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle, LanguageSwitcher } from './LanguageSwitcher';
 
@@ -24,82 +24,98 @@ export default function Navbar() {
     { href: '/trends', label: t('trends') },
   ];
 
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b glass bg-background/80">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-            AI
-          </div>
-          <span className="text-xl font-bold tracking-tight">AI Radar</span>
-        </Link>
-
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center space-x-6">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                'text-sm font-medium transition-colors hover:text-primary',
-                pathname === link.href || pathname.startsWith(link.href + '/') ? 'text-foreground' : 'text-muted-foreground'
-              )}
-            >
-              {link.label}
+    <>
+      <header className="sticky top-0 z-50 w-full glass border-b border-border/50">
+        <div className="container-custom">
+          <div className="flex h-16 items-center justify-between">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-cyan-600 text-white font-bold text-sm shadow-sm group-hover:shadow-md transition-shadow">
+                <Radar className="h-5 w-5" />
+              </div>
+              <span className="text-lg font-bold tracking-tight">AI Radar</span>
             </Link>
-          ))}
-        </nav>
 
-        {/* Actions */}
-        <div className="hidden md:flex items-center space-x-2">
-          <ThemeToggle />
-          <LanguageSwitcher />
-          <Button variant="ghost" size="sm" onClick={() => setLoginOpen(true)}>
-            {t('login')}
-          </Button>
-          <Button size="sm" onClick={() => setLoginOpen(true)}>
-            {t('signup')}
-          </Button>
-        </div>
+            {/* Desktop Nav */}
+            <nav className="hidden md:flex items-center gap-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                    isActive(link.href)
+                      ? 'text-foreground bg-muted'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  )}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
 
-        {/* Mobile Menu Toggle */}
-        <button
-          className="md:hidden p-2 text-muted-foreground"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
-      </div>
+            {/* Actions */}
+            <div className="hidden md:flex items-center gap-2">
+              <ThemeToggle />
+              <LanguageSwitcher />
+              <div className="w-px h-6 bg-border mx-1" />
+              <Button variant="ghost" size="sm" onClick={() => setLoginOpen(true)}>
+                {t('login')}
+              </Button>
+              <Button size="sm" onClick={() => setLoginOpen(true)}>
+                {t('signup')}
+              </Button>
+            </div>
 
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t bg-background p-4 space-y-4">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                'block text-sm font-medium transition-colors hover:text-primary',
-                pathname === link.href || pathname.startsWith(link.href + '/') ? 'text-foreground' : 'text-muted-foreground'
-              )}
-              onClick={() => setMobileMenuOpen(false)}
+            {/* Mobile Menu Toggle */}
+            <button
+              className="md:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              {link.label}
-            </Link>
-          ))}
-          <div className="flex flex-col space-y-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => { setLoginOpen(true); setMobileMenuOpen(false); }}>
-              {t('login')}
-            </Button>
-            <Button onClick={() => { setLoginOpen(true); setMobileMenuOpen(false); }}>
-              {t('signup')}
-            </Button>
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
-      )}
 
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-border/50 bg-background">
+            <div className="container-custom py-4 space-y-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    'block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                    isActive(link.href)
+                      ? 'text-foreground bg-muted'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  )}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <div className="pt-3 border-t border-border/50 space-y-2">
+                <div className="flex items-center gap-2 px-3">
+                  <ThemeToggle />
+                  <LanguageSwitcher />
+                </div>
+                <Button variant="outline" className="w-full" onClick={() => { setLoginOpen(true); setMobileMenuOpen(false); }}>
+                  {t('login')}
+                </Button>
+                <Button className="w-full" onClick={() => { setLoginOpen(true); setMobileMenuOpen(false); }}>
+                  {t('signup')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </header>
       <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
-    </header>
+    </>
   );
 }
