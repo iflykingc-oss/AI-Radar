@@ -60,17 +60,27 @@ interface ProductDemo {
 export default function LandingPage() {
   const t = useTranslations('landing');
   const tNav = useTranslations('nav');
+  const tCommon = useTranslations('common');
   const pricingTiers: PricingTier[] = t.raw('pricing_tiers') as PricingTier[];
   const faqItems: FAQItem[] = t.raw('faq') as FAQItem[];
 
   const [topProducts, setTopProducts] = useState<ProductDemo[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState(false);
 
   useEffect(() => {
     fetch('/api/products?limit=6&sort=confidence')
-      .then(r => r.json())
-      .then(d => setTopProducts(d.products || []))
-      .catch(() => {})
+      .then(r => {
+        if (!r.ok) throw new Error('Failed to fetch');
+        return r.json();
+      })
+      .then(d => {
+        setTopProducts(d.products || []);
+        setProductsError(false);
+      })
+      .catch(() => {
+        setProductsError(true);
+      })
       .finally(() => setProductsLoading(false));
   }, []);
 
@@ -336,9 +346,13 @@ export default function LandingPage() {
                 );
               })}
             </div>
+          ) : productsError ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">{tCommon('error_desc', { defaultValue: 'Failed to load products. Please try again later.' })}</p>
+            </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">{t('product_loading')}</p>
+              <p className="text-muted-foreground">{tCommon('no_results', { defaultValue: 'No products found' })}</p>
             </div>
           )}
 

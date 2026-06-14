@@ -129,14 +129,14 @@ export default async function ProductDetailPage({
     offers: product.pricing_model
       ? {
           '@type': 'Offer',
-          price: product.pricing_model === 'free' ? '0' : '0',
+          price: product.pricing_model === 'free' || product.pricing_model === 'open_source' ? '0' : undefined,
           priceCurrency: 'USD',
         }
       : undefined,
     aggregateRating: product.confidence_score
       ? {
           '@type': 'AggregateRating',
-          ratingValue: Math.round(product.confidence_score * 100).toString(),
+          ratingValue: Math.round(product.confidence_score).toString(),
           bestRating: '100',
           worstRating: '0',
         }

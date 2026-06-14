@@ -107,22 +107,47 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
 
   const [inWatchlist, setInWatchlist] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [similarProducts, setSimilarProducts] = useState<ProductDetail[]>([]);
+  const [similarError, setSimilarError] = useState<string | null>(null);
+
+  // Check auth status
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/admin/check');
+        if (res.ok) {
+          const data = await res.json();
+          setIsAuthenticated(!!data.role);
+        }
+      } catch {
+        setIsAuthenticated(false);
+      }
+    }
+    checkAuth();
+  }, []);
 
   // Fetch similar products
   useEffect(() => {
     if (!product.category) return;
     fetch(`/api/products?category=${encodeURIComponent(product.category)}&limit=4`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error('Failed to fetch');
+        return r.json();
+      })
       .then((d) => {
         const filtered = (d.products || []).filter((p: ProductDetail) => p.id !== product.id).slice(0, 3);
         setSimilarProducts(filtered);
+        setSimilarError(null);
       })
-      .catch(() => {});
+      .catch((e) => {
+        console.error('Failed to fetch similar products:', e);
+        setSimilarError('Failed to load similar products');
+      });
   }, [product.category, product.id]);
 
   const handleWatchlistToggle = async () => {
-    if (!loginOpen) {
+    if (!isAuthenticated) {
       setLoginOpen(true);
       return;
     }
@@ -491,7 +516,11 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
       </div>
 
       {/* Similar Products */}
-      {similarProducts.length > 0 && (
+      {similarError ? (
+        <div className="mb-8 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">
+          {similarError}
+        </div>
+      ) : similarProducts.length > 0 ? (
         <div className="mb-8">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             <Users className="h-5 w-5" />
@@ -516,7 +545,7 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
-                      {sp.description || 'No description'}
+                      {sp.description || tCommon('no_description', { defaultValue: 'No description' })}
                     </p>
                     <div className="flex items-center justify-between pt-2 border-t">
                       <span className={`text-xs font-semibold ${getConfidenceText(sp.confidence_score)}`}>
@@ -534,7 +563,7 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
             ))}
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Back Button */}
       <div className="text-center">

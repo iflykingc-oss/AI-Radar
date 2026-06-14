@@ -100,40 +100,43 @@ export default function TrendsPage() {
   const tCommon = useTranslations('common');
   const [data, setData] = useState<TrendData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'trending' | 'rising' | 'new' | 'categories'>('trending');
   const [wordCloudData, setWordCloudData] = useState<WordData[]>([]);
 
   useEffect(() => {
     async function fetchTrends() {
       try {
+        setLoading(true);
+        setError(null);
         const res = await fetch('/api/trends/top20?limit=50');
-        if (res.ok) {
-          const result = await res.json();
-          setData(result);
+        if (!res.ok) throw new Error('Failed to fetch');
+        const result = await res.json();
+        setData(result);
 
-          // Generate word cloud from tags
-          const tagMap = new Map<string, number>();
-          const allProducts = [
-            ...(result.trending || []),
-            ...(result.rising || []),
-            ...(result.newThisWeek || []),
-          ];
+        // Generate word cloud from tags
+        const tagMap = new Map<string, number>();
+        const allProducts = [
+          ...(result.trending || []),
+          ...(result.rising || []),
+          ...(result.newThisWeek || []),
+        ];
 
-          allProducts.forEach((product: TrendingProduct) => {
-            product.tags?.forEach((tag: string) => {
-              tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
-            });
+        allProducts.forEach((product: TrendingProduct) => {
+          product.tags?.forEach((tag: string) => {
+            tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
           });
+        });
 
-          const wordData = Array.from(tagMap.entries())
-            .map(([text, value]) => ({ text, value }))
-            .sort((a, b) => b.value - a.value)
-            .slice(0, 50);
+        const wordData = Array.from(tagMap.entries())
+          .map(([text, value]) => ({ text, value }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 50);
 
-          setWordCloudData(wordData);
-        }
+        setWordCloudData(wordData);
       } catch (e) {
         console.error('Failed to fetch trends:', e);
+        setError('Failed to load trends data. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -145,6 +148,19 @@ export default function TrendsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <BarChart3 className="h-12 w-12 text-destructive" />
+        <h2 className="text-xl font-semibold">Failed to load trends</h2>
+        <p className="text-muted-foreground">{error}</p>
+        <Button variant="outline" onClick={() => window.location.reload()}>
+          Retry
+        </Button>
       </div>
     );
   }

@@ -82,6 +82,7 @@ export default function NewsPage() {
 
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -111,6 +112,7 @@ export default function NewsPage() {
   const fetchNews = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const params = new URLSearchParams();
       params.set('page', String(page));
       params.set('limit', '20');
@@ -127,10 +129,11 @@ export default function NewsPage() {
       setTotal(data.pagination?.total || 0);
     } catch (e) {
       console.error('Failed to fetch news:', e);
+      setError(tCommon('error_desc', { defaultValue: 'Failed to load news. Please try again.' }));
     } finally {
       setLoading(false);
     }
-  }, [page, search, selectedSource, selectedCategory]);
+  }, [page, search, selectedSource, selectedCategory, tCommon]);
 
   useEffect(() => {
     fetchNews();
@@ -246,6 +249,15 @@ export default function NewsPage() {
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : error ? (
+          <div className="text-center py-20">
+            <Newspaper className="h-12 w-12 mx-auto text-destructive mb-4" />
+            <h3 className="text-lg font-semibold mb-2">{tCommon('error_title', { defaultValue: 'Something went wrong' })}</h3>
+            <p className="text-sm text-muted-foreground mb-4">{error}</p>
+            <Button variant="outline" onClick={fetchNews}>
+              {tCommon('retry', { defaultValue: 'Retry' })}
+            </Button>
           </div>
         ) : news.length === 0 ? (
           <div className="text-center py-20">
