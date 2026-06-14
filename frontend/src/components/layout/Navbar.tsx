@@ -17,11 +17,11 @@ export default function Navbar() {
   const t = useTranslations('nav');
 
   const navLinks = [
-    { href: '/home', label: t('home') },
     { href: '/discover', label: t('discover') },
+    { href: '/news', label: 'News' },
+    { href: '/trends', label: t('trends') },
     { href: '/watchlist', label: t('watchlist') },
     { href: '/compare', label: t('compare') },
-    { href: '/trends', label: t('trends') },
   ];
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');

@@ -9,12 +9,76 @@ import { ErrorState } from '@/components/empty-states/ErrorState';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CATEGORIES, PRICING_MODELS, SORT_OPTIONS } from '@/lib/constants';
-import { Search, SlidersHorizontal, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Search,
+  SlidersHorizontal,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Calendar,
+  Star,
+  TrendingUp,
+  Zap,
+  Globe,
+  Filter,
+  LayoutGrid,
+  List,
+  ArrowUpDown,
+} from 'lucide-react';
 import { Database } from '@/lib/supabase/types';
 import { useTranslations } from 'next-intl';
 
 type Product = Database['public']['Tables']['products']['Row'];
+
+const CATEGORIES = [
+  'LLM',
+  'Image Generation',
+  'Video Generation',
+  'Speech/Audio',
+  'AI Agents',
+  'AI Coding',
+  'AI Search',
+  'AI Framework',
+  'AI Platform',
+  'MLOps',
+  'Computer Vision',
+  'NLP',
+  'Robotics',
+  'Other',
+];
+
+const PRICING_MODELS = [
+  { value: 'free', label: 'Free', icon: '🆓' },
+  { value: 'freemium', label: 'Freemium', icon: '🆓💎' },
+  { value: 'paid', label: 'Paid', icon: '💰' },
+  { value: 'open_source', label: 'Open Source', icon: '📦' },
+];
+
+const SORT_OPTIONS = [
+  { value: 'recent', label: 'Newest First', icon: <Calendar className="h-4 w-4" /> },
+  { value: 'confidence', label: 'Highest Score', icon: <Star className="h-4 w-4" /> },
+  { value: 'stars', label: 'Most Stars', icon: <TrendingUp className="h-4 w-4" /> },
+  { value: 'name', label: 'Alphabetical', icon: <ArrowUpDown className="h-4 w-4" /> },
+];
+
+const CONFIDENCE_LEVELS = [
+  { value: 'high', label: 'High (80+)', color: 'bg-emerald-500/10 text-emerald-600' },
+  { value: 'medium', label: 'Medium (50-79)', color: 'bg-amber-500/10 text-amber-600' },
+  { value: 'low', label: 'Low (<50)', color: 'bg-red-500/10 text-red-600' },
+];
+
+const STATUS_OPTIONS = [
+  { value: 'active', label: 'Active', color: 'bg-emerald-500/10 text-emerald-600' },
+  { value: 'low_active', label: 'Low Active', color: 'bg-amber-500/10 text-amber-600' },
+];
+
+const TIME_RANGES = [
+  { value: '7d', label: 'Last 7 days' },
+  { value: '30d', label: 'Last 30 days' },
+  { value: '90d', label: 'Last 90 days' },
+  { value: 'all', label: 'All time' },
+];
 
 export default function DiscoverPage() {
   const t = useTranslations('discover');
@@ -32,10 +96,19 @@ export default function DiscoverPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [sort, setSort] = useState(searchParams.get('sort') || 'recent');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filters, setFilters] = useState({
     category: searchParams.get('category') || '',
     pricing: searchParams.get('pricing') || '',
+    confidence: searchParams.get('confidence') || '',
+    status: searchParams.get('status') || '',
+    timeRange: searchParams.get('timeRange') || '',
+    minStars: searchParams.get('minStars') || '',
+    source: searchParams.get('source') || '',
   });
+
+  // Count active filters
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
   // Sync URL state
   const updateUrl = useCallback((updates: Record<string, string>) => {
@@ -60,11 +133,12 @@ export default function DiscoverPage() {
       if (search) params.set('search', search);
       if (filters.category) params.set('category', filters.category);
       if (filters.pricing) params.set('pricing', filters.pricing);
+      if (filters.confidence) params.set('confidence', filters.confidence);
+      if (filters.minStars) params.set('minStars', filters.minStars);
+      if (filters.source) params.set('source', filters.source);
 
       const res = await fetch(`/api/products?${params}`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch products');
-      }
+      if (!res.ok) throw new Error('Failed to fetch products');
       const data = await res.json();
       setProducts(data.products || []);
       setTotalPages(data.pagination?.totalPages || 1);
@@ -75,7 +149,7 @@ export default function DiscoverPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, sort, search, filters.category, filters.pricing, t]);
+  }, [page, sort, search, filters, t]);
 
   useEffect(() => {
     fetchProducts();
@@ -88,7 +162,7 @@ export default function DiscoverPage() {
       setPage(1);
     }, 300);
     return () => clearTimeout(timer);
-  }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [search]);
 
   const handleSortChange = (newSort: string) => {
     setSort(newSort);
@@ -103,52 +177,126 @@ export default function DiscoverPage() {
     updateUrl({ [key]: newFilters[key as keyof typeof filters], page: '1' });
   };
 
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-    updateUrl({ page: String(newPage) });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const clearAll = () => {
+  const clearAllFilters = () => {
     setSearch('');
-    setFilters({ category: '', pricing: '' });
+    setFilters({
+      category: '',
+      pricing: '',
+      confidence: '',
+      status: '',
+      timeRange: '',
+      minStars: '',
+      source: '',
+    });
     setSort('recent');
     setPage(1);
     router.replace(pathname);
   };
 
-  const activeFilterCount = Object.values(filters).filter(Boolean).length + (sort !== 'recent' ? 1 : 0);
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Filters Sidebar */}
-        <aside className={`w-full lg:w-64 shrink-0 ${filterOpen ? 'block' : 'hidden lg:block'}`}>
-          <div className="lg:sticky lg:top-20">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">{t('filters')}</h2>
-              <div className="flex items-center gap-2">
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b bg-muted/30">
+        <div className="container-custom py-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-2xl font-bold">Discover AI Products</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Browse and filter {total.toLocaleString()} AI tools and products
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              className="pl-12 pr-4 h-12 text-base"
+              placeholder="Search by name, description, tags..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button
+                className="absolute right-4 top-1/2 -translate-y-1/2"
+                onClick={() => setSearch('')}
+              >
+                <X className="h-5 w-5 text-muted-foreground" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="container-custom py-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Sidebar Filters */}
+          <aside className={`w-full lg:w-72 shrink-0 ${filterOpen ? 'block' : 'hidden lg:block'}`}>
+            <div className="lg:sticky lg:top-20 space-y-6">
+              {/* Filter Header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  <h2 className="font-semibold">Filters</h2>
+                  {activeFilterCount > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </div>
                 {activeFilterCount > 0 && (
-                  <Button variant="ghost" size="sm" onClick={clearAll}>
-                    {t('clear_all')}
+                  <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                    Clear all
                   </Button>
                 )}
-                <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setFilterOpen(false)}>
-                  <X className="h-4 w-4" />
-                </Button>
               </div>
-            </div>
 
-            <div className="space-y-6">
+              {/* Sort */}
+              <div>
+                <h3 className="text-sm font-medium mb-3">Sort By</h3>
+                <div className="space-y-1">
+                  {SORT_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => handleSortChange(option.value)}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        sort === option.value
+                          ? 'bg-primary/10 text-primary font-medium'
+                          : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {option.icon}
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Category */}
               <div>
-                <h3 className="text-sm font-medium mb-2">{t('category')}</h3>
+                <h3 className="text-sm font-medium mb-3">Category</h3>
                 <div className="flex flex-wrap gap-1.5">
                   {CATEGORIES.map((cat) => (
                     <Badge
                       key={cat}
                       variant={filters.category === cat ? 'default' : 'outline'}
-                      className="cursor-pointer"
+                      className="cursor-pointer text-xs"
                       onClick={() => handleFilterChange('category', cat)}
                     >
                       {cat}
@@ -159,110 +307,230 @@ export default function DiscoverPage() {
 
               {/* Pricing */}
               <div>
-                <h3 className="text-sm font-medium mb-2">{t('pricing')}</h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {PRICING_MODELS.map((mode) => (
-                    <Badge
-                      key={mode}
-                      variant={filters.pricing === mode ? 'default' : 'outline'}
-                      className="cursor-pointer capitalize"
-                      onClick={() => handleFilterChange('pricing', mode)}
+                <h3 className="text-sm font-medium mb-3">Pricing</h3>
+                <div className="space-y-1">
+                  {PRICING_MODELS.map((pricing) => (
+                    <button
+                      key={pricing.value}
+                      onClick={() => handleFilterChange('pricing', pricing.value)}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        filters.pricing === pricing.value
+                          ? 'bg-primary/10 text-primary font-medium'
+                          : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
                     >
-                      {mode.replace('_', ' ')}
-                    </Badge>
+                      <span>{pricing.icon}</span>
+                      {pricing.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Confidence Level */}
+              <div>
+                <h3 className="text-sm font-medium mb-3">Confidence Level</h3>
+                <div className="space-y-1">
+                  {CONFIDENCE_LEVELS.map((level) => (
+                    <button
+                      key={level.value}
+                      onClick={() => handleFilterChange('confidence', level.value)}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        filters.confidence === level.value
+                          ? 'bg-primary/10 text-primary font-medium'
+                          : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${level.color}`}>
+                        {level.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Status */}
+              <div>
+                <h3 className="text-sm font-medium mb-3">Status</h3>
+                <div className="space-y-1">
+                  {STATUS_OPTIONS.map((status) => (
+                    <button
+                      key={status.value}
+                      onClick={() => handleFilterChange('status', status.value)}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        filters.status === status.value
+                          ? 'bg-primary/10 text-primary font-medium'
+                          : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
+                        {status.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* GitHub Stars */}
+              <div>
+                <h3 className="text-sm font-medium mb-3">Min GitHub Stars</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {['100', '1000', '5000', '10000'].map((stars) => (
+                    <button
+                      key={stars}
+                      onClick={() => handleFilterChange('minStars', filters.minStars === stars ? '' : stars)}
+                      className={`flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        filters.minStars === stars
+                          ? 'bg-primary/10 text-primary font-medium border border-primary/20'
+                          : 'border border-border hover:bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <Star className="h-3 w-3" />
+                      {parseInt(stars) >= 1000 ? `${parseInt(stars)/1000}k` : stars}+
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Time Range */}
+              <div>
+                <h3 className="text-sm font-medium mb-3">Added</h3>
+                <div className="space-y-1">
+                  {TIME_RANGES.map((range) => (
+                    <button
+                      key={range.value}
+                      onClick={() => handleFilterChange('timeRange', range.value)}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        filters.timeRange === range.value
+                          ? 'bg-primary/10 text-primary font-medium'
+                          : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <Calendar className="h-4 w-4" />
+                      {range.label}
+                    </button>
                   ))}
                 </div>
               </div>
             </div>
-          </div>
-        </aside>
+          </aside>
 
-        {/* Main Content */}
-        <main className="flex-1">
-          {/* Search Bar */}
-          <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              className="pl-10 pr-10 h-12 text-lg"
-              placeholder={t('search_placeholder')}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
-              <button className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setSearch('')}>
-                <X className="h-5 w-5 text-muted-foreground" />
-              </button>
-            )}
-          </div>
-
-          {/* Toolbar: count + sort + mobile filter */}
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-muted-foreground">
-              {loading ? t('loading') : `${total} ${t('products_found')}`}
-            </p>
-            <div className="flex items-center gap-2">
-              <select
-                value={sort}
-                onChange={(e) => handleSortChange(e.target.value)}
-                className="h-8 rounded-md border border-input bg-background px-2 text-sm"
-              >
-                {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-              <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setFilterOpen(!filterOpen)}>
-                <SlidersHorizontal className="mr-2 h-4 w-4" />
-                {t('filters')} {activeFilterCount > 0 && `(${activeFilterCount})`}
-              </Button>
+          {/* Main Content */}
+          <main className="flex-1 min-w-0">
+            {/* Toolbar */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="lg:hidden"
+                  onClick={() => setFilterOpen(!filterOpen)}
+                >
+                  <SlidersHorizontal className="h-4 w-4 mr-2" />
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <Badge variant="secondary" className="ml-1 text-xs">
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+                {activeFilterCount > 0 && (
+                  <div className="hidden lg:flex items-center gap-2">
+                    {filters.category && (
+                      <Badge variant="secondary" className="gap-1">
+                        {filters.category}
+                        <X className="h-3 w-3 cursor-pointer" onClick={() => handleFilterChange('category', '')} />
+                      </Badge>
+                    )}
+                    {filters.pricing && (
+                      <Badge variant="secondary" className="gap-1">
+                        {filters.pricing}
+                        <X className="h-3 w-3 cursor-pointer" onClick={() => handleFilterChange('pricing', '')} />
+                      </Badge>
+                    )}
+                    {filters.confidence && (
+                      <Badge variant="secondary" className="gap-1">
+                        {filters.confidence}
+                        <X className="h-3 w-3 cursor-pointer" onClick={() => handleFilterChange('confidence', '')} />
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {loading ? 'Loading...' : `${total.toLocaleString()} products`}
+              </p>
             </div>
-          </div>
 
-          {/* Product Grid */}
-          {error ? (
-            <ErrorState message={error} onRetry={fetchProducts} />
-          ) : loading ? (
-            <ProductCardGridSkeleton count={6} />
-          ) : products.length === 0 ? (
-            <NoResults
-              onClearFilters={() => {
-                clearAll();
-              }}
-            />
-          ) : (
-            <>
-              <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            {/* Products Grid/List */}
+            {error ? (
+              <ErrorState message={error} onRetry={fetchProducts} />
+            ) : loading ? (
+              <ProductCardGridSkeleton count={6} />
+            ) : products.length === 0 ? (
+              <NoResults onClearFilters={clearAllFilters} />
+            ) : viewMode === 'grid' ? (
+              <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {products.map((product) => (
                   <ProductCard key={product.id} {...product} />
                 ))}
               </div>
+            ) : (
+              <div className="space-y-3">
+                {products.map((product) => (
+                  <ProductCard key={product.id} {...product} />
+                ))}
+              </div>
+            )}
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-8">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => handlePageChange(page - 1)}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm text-muted-foreground px-3">
-                    {page} / {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => handlePageChange(page + 1)}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-8">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => {
+                    setPage(page - 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum = Math.max(1, Math.min(page - 2, totalPages - 4)) + i;
+                    if (pageNum > totalPages) return null;
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={pageNum === page ? 'default' : 'outline'}
+                        size="sm"
+                        className="w-9"
+                        onClick={() => {
+                          setPage(pageNum);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
                 </div>
-              )}
-            </>
-          )}
-        </main>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages}
+                  onClick={() => {
+                    setPage(page + 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </main>
+        </div>
       </div>
     </div>
   );
