@@ -3,7 +3,7 @@ import { locales, defaultLocale } from './config';
 
 export const { Link, redirect, usePathname, useRouter } = createNavigation({
   locales,
-  localePrefix: 'as-needed',
+  localePrefix: 'never',
 });
 
 export { defaultLocale };
