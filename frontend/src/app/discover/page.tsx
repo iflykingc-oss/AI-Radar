@@ -55,11 +55,11 @@ const PRICING_MODELS = [
   { value: 'open_source', label: 'Open Source', icon: '📦' },
 ];
 
-const SORT_OPTIONS = [
-  { value: 'recent', label: 'Newest First', icon: <Calendar className="h-4 w-4" /> },
-  { value: 'confidence', label: 'Highest Score', icon: <Star className="h-4 w-4" /> },
-  { value: 'stars', label: 'Most Stars', icon: <TrendingUp className="h-4 w-4" /> },
-  { value: 'name', label: 'Alphabetical', icon: <ArrowUpDown className="h-4 w-4" /> },
+const getSortOptions = (t: any) => [
+  { value: 'recent', label: t('newest_first'), icon: <Calendar className="h-4 w-4" /> },
+  { value: 'confidence', label: t('highest_score'), icon: <Star className="h-4 w-4" /> },
+  { value: 'stars', label: t('most_stars'), icon: <TrendingUp className="h-4 w-4" /> },
+  { value: 'name', label: t('alphabetical'), icon: <ArrowUpDown className="h-4 w-4" /> },
 ];
 
 const CONFIDENCE_LEVELS = [
@@ -73,11 +73,11 @@ const STATUS_OPTIONS = [
   { value: 'low_active', label: 'Low Active', color: 'bg-amber-500/10 text-amber-600' },
 ];
 
-const TIME_RANGES = [
-  { value: '7d', label: 'Last 7 days' },
-  { value: '30d', label: 'Last 30 days' },
-  { value: '90d', label: 'Last 90 days' },
-  { value: 'all', label: 'All time' },
+const getTimeRanges = (t: any) => [
+  { value: '7d', label: t('last_7_days') },
+  { value: '30d', label: t('last_30_days') },
+  { value: '90d', label: t('last_90_days') },
+  { value: 'all', label: t('all_time') },
 ];
 
 export default function DiscoverPage() {
@@ -200,9 +200,9 @@ export default function DiscoverPage() {
         <div className="container-custom py-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold">Discover AI Products</h1>
+              <h1 className="text-2xl font-bold">{t('title')}</h1>
               <p className="text-sm text-muted-foreground mt-1">
-                Browse and filter {total.toLocaleString()} AI tools and products
+                {t('subtitle', { count: total.toLocaleString() })}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -228,7 +228,7 @@ export default function DiscoverPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               className="pl-12 pr-4 h-12 text-base"
-              placeholder="Search by name, description, tags..."
+              placeholder={t('search_placeholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -253,7 +253,7 @@ export default function DiscoverPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4" />
-                  <h2 className="font-semibold">Filters</h2>
+                  <h2 className="font-semibold">{t('filters')}</h2>
                   {activeFilterCount > 0 && (
                     <Badge variant="secondary" className="text-xs">
                       {activeFilterCount}
@@ -262,16 +262,16 @@ export default function DiscoverPage() {
                 </div>
                 {activeFilterCount > 0 && (
                   <Button variant="ghost" size="sm" onClick={clearAllFilters}>
-                    Clear all
+                    {t('clear_all')}
                   </Button>
                 )}
               </div>
 
               {/* Sort */}
               <div>
-                <h3 className="text-sm font-medium mb-3">Sort By</h3>
+                <h3 className="text-sm font-medium mb-3">{t('sort_by')}</h3>
                 <div className="space-y-1">
-                  {SORT_OPTIONS.map((option) => (
+                  {getSortOptions(t).map((option) => (
                     <button
                       key={option.value}
                       onClick={() => handleSortChange(option.value)}
@@ -290,7 +290,7 @@ export default function DiscoverPage() {
 
               {/* Category */}
               <div>
-                <h3 className="text-sm font-medium mb-3">Category</h3>
+                <h3 className="text-sm font-medium mb-3">{t('category')}</h3>
                 <div className="flex flex-wrap gap-1.5">
                   {CATEGORIES.map((cat) => (
                     <Badge
@@ -307,7 +307,7 @@ export default function DiscoverPage() {
 
               {/* Pricing */}
               <div>
-                <h3 className="text-sm font-medium mb-3">Pricing</h3>
+                <h3 className="text-sm font-medium mb-3">{t('pricing')}</h3>
                 <div className="space-y-1">
                   {PRICING_MODELS.map((pricing) => (
                     <button
@@ -328,7 +328,7 @@ export default function DiscoverPage() {
 
               {/* Confidence Level */}
               <div>
-                <h3 className="text-sm font-medium mb-3">Confidence Level</h3>
+                <h3 className="text-sm font-medium mb-3">{t('confidence_level')}</h3>
                 <div className="space-y-1">
                   {CONFIDENCE_LEVELS.map((level) => (
                     <button
@@ -350,7 +350,7 @@ export default function DiscoverPage() {
 
               {/* Status */}
               <div>
-                <h3 className="text-sm font-medium mb-3">Status</h3>
+                <h3 className="text-sm font-medium mb-3">{t('status')}</h3>
                 <div className="space-y-1">
                   {STATUS_OPTIONS.map((status) => (
                     <button
@@ -372,7 +372,7 @@ export default function DiscoverPage() {
 
               {/* GitHub Stars */}
               <div>
-                <h3 className="text-sm font-medium mb-3">Min GitHub Stars</h3>
+                <h3 className="text-sm font-medium mb-3">{t('min_stars')}</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {['100', '1000', '5000', '10000'].map((stars) => (
                     <button
@@ -393,9 +393,9 @@ export default function DiscoverPage() {
 
               {/* Time Range */}
               <div>
-                <h3 className="text-sm font-medium mb-3">Added</h3>
+                <h3 className="text-sm font-medium mb-3">{t('added')}</h3>
                 <div className="space-y-1">
-                  {TIME_RANGES.map((range) => (
+                  {getTimeRanges(t).map((range) => (
                     <button
                       key={range.value}
                       onClick={() => handleFilterChange('timeRange', range.value)}
@@ -457,7 +457,7 @@ export default function DiscoverPage() {
                 )}
               </div>
               <p className="text-sm text-muted-foreground">
-                {loading ? 'Loading...' : `${total.toLocaleString()} products`}
+                {loading ? t('loading') : `${total.toLocaleString()} ${t('products_found')}`}
               </p>
             </div>
 

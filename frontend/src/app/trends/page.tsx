@@ -97,6 +97,7 @@ function MiniBarChart({ data, max }: { data: number[]; max: number }) {
 
 export default function TrendsPage() {
   const t = useTranslations('trends');
+  const tCommon = useTranslations('common');
   const [data, setData] = useState<TrendData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'trending' | 'rising' | 'new' | 'categories'>('trending');
@@ -172,9 +173,9 @@ export default function TrendsPage() {
               <BarChart3 className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">AI Trends</h1>
+              <h1 className="text-2xl font-bold">{t('title')}</h1>
               <p className="text-sm text-muted-foreground">
-                Discover what's trending in the AI ecosystem
+                {t('subtitle')}
               </p>
             </div>
           </div>
@@ -185,11 +186,11 @@ export default function TrendsPage() {
         {/* Stats Overview */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           {[
-            { label: '🔥 Hot', value: trendingProducts.filter(p => p.trend_category === 'hot').length, color: 'from-red-500 to-orange-500' },
-            { label: '📈 Rising', value: risingProducts.length, color: 'from-emerald-500 to-teal-500' },
-            { label: '📉 Falling', value: fallingProducts.length, color: 'from-gray-500 to-gray-600' },
-            { label: '✨ New', value: newProducts.length, color: 'from-blue-500 to-cyan-500' },
-            { label: '📂 Categories', value: topCategories.length, color: 'from-purple-500 to-pink-500' },
+            { label: `🔥 ${t('hot')}`, value: trendingProducts.filter(p => p.trend_category === 'hot').length, color: 'from-red-500 to-orange-500' },
+            { label: `📈 ${t('rising')}`, value: risingProducts.length, color: 'from-emerald-500 to-teal-500' },
+            { label: `📉 ${t('falling')}`, value: fallingProducts.length, color: 'from-gray-500 to-gray-600' },
+            { label: `✨ ${tCommon('new')}`, value: newProducts.length, color: 'from-blue-500 to-cyan-500' },
+            { label: `📂 ${tCommon('categories')}`, value: topCategories.length, color: 'from-purple-500 to-pink-500' },
           ].map((stat, i) => (
             <Card key={i} className="border-border/50 overflow-hidden">
               <CardContent className="pt-5 pb-4 relative">
@@ -207,10 +208,10 @@ export default function TrendsPage() {
             {/* Tabs */}
             <div className="flex gap-2 bg-muted p-1 rounded-lg w-fit">
               {[
-                { key: 'trending', label: '🔥 Trending', count: trendingProducts.length },
-                { key: 'rising', label: '📈 Rising', count: risingProducts.length },
-                { key: 'new', label: '✨ New', count: newProducts.length },
-                { key: 'categories', label: '📂 Categories', count: topCategories.length },
+                { key: 'trending', label: `🔥 ${tCommon('trending')}`, count: trendingProducts.length },
+                { key: 'rising', label: `📈 ${t('rising')}`, count: risingProducts.length },
+                { key: 'new', label: `✨ ${tCommon('new')}`, count: newProducts.length },
+                { key: 'categories', label: `📂 ${t('top_categories')}`, count: topCategories.length },
               ].map((tab) => (
                 <button
                   key={tab.key}
@@ -265,9 +266,9 @@ export default function TrendsPage() {
                   <Card className="border-border/50">
                     <CardContent className="py-12 text-center">
                       <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">No data yet</h3>
+                      <h3 className="text-lg font-semibold mb-2">{t('no_data')}</h3>
                       <p className="text-sm text-muted-foreground">
-                        Trends will appear as the crawler collects more data
+                        {t('no_data_desc')}
                       </p>
                     </CardContent>
                   </Card>
@@ -347,7 +348,7 @@ export default function TrendsPage() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Tag className="h-4 w-4" />
-                  Trending Tags
+                  {t('trending_tags')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -362,7 +363,7 @@ export default function TrendsPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Layers className="h-4 w-4" />
-                  Top Categories
+                  {t('top_categories')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -391,7 +392,7 @@ export default function TrendsPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Rocket className="h-4 w-4 text-emerald-500" />
-                  Fastest Rising
+                  {t('fastest_rising')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -416,7 +417,7 @@ export default function TrendsPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Eye className="h-4 w-4 text-blue-500" />
-                  Highest Confidence
+                  {t('highest_confidence')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -444,15 +445,15 @@ export default function TrendsPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Globe className="h-4 w-4" />
-                  Ecosystem
+                  {t('ecosystem')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {[
-                  { label: 'Total Products', value: '3,000+' },
-                  { label: 'Data Sources', value: '15+' },
-                  { label: 'RSS Feeds', value: '150+' },
-                  { label: 'Update Frequency', value: 'Daily' },
+                  { label: t('total_products'), value: '3,000+' },
+                  { label: t('data_sources'), value: '15+' },
+                  { label: t('rss_feeds'), value: '150+' },
+                  { label: t('update_frequency'), value: t('daily') },
                 ].map((stat) => (
                   <div key={stat.label} className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">{stat.label}</span>

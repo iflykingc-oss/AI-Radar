@@ -77,7 +77,7 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function NewsPage() {
-  const t = useTranslations('discover');
+  const t = useTranslations('news');
   const tCommon = useTranslations('common');
 
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -90,8 +90,8 @@ export default function NewsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
 
   const sources = [
-    { value: '', label: 'All Sources' },
-    { value: 'rss', label: '📰 RSS Feeds' },
+    { value: '', label: t('all_sources') },
+    { value: 'rss', label: '📰 RSS' },
     { value: 'aihot', label: '🔥 AIhot' },
     { value: 'twitter', label: '🐦 Twitter' },
     { value: 'reddit', label: '🤖 Reddit' },
@@ -99,12 +99,12 @@ export default function NewsPage() {
   ];
 
   const categories = [
-    { value: '', label: 'All Categories' },
-    { value: 'Funding', label: '💰 Funding' },
-    { value: 'Acquisition', label: '🏢 Acquisition' },
-    { value: 'Product Launch', label: '🚀 Product Launch' },
-    { value: 'Research', label: '🔬 Research' },
-    { value: 'Regulation', label: '⚖️ Regulation' },
+    { value: '', label: t('all_categories') },
+    { value: 'Funding', label: `💰 ${t('funding')}` },
+    { value: 'Acquisition', label: `🏢 ${t('acquisition')}` },
+    { value: 'Product Launch', label: `🚀 ${t('product_launch')}` },
+    { value: 'Research', label: `🔬 ${t('research')}` },
+    { value: 'Regulation', label: `⚖️ ${t('regulation')}` },
     { value: 'LLM', label: '🧠 LLM' },
   ];
 
@@ -161,9 +161,9 @@ export default function NewsPage() {
               <Newspaper className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">AI News</h1>
+              <h1 className="text-2xl font-bold">{t('title')}</h1>
               <p className="text-sm text-muted-foreground">
-                Latest AI industry news, funding, acquisitions, and analysis
+                {t('subtitle')}
               </p>
             </div>
           </div>
@@ -177,7 +177,7 @@ export default function NewsPage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search news..."
+              placeholder={t('search_placeholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 h-10"
@@ -250,13 +250,13 @@ export default function NewsPage() {
         ) : news.length === 0 ? (
           <div className="text-center py-20">
             <Newspaper className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No news found</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('no_news')}</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              {hasFilters ? 'Try adjusting your filters' : 'News will appear as the crawler collects data'}
+              {hasFilters ? t('adjust_filters') : t('no_news_desc')}
             </p>
             {hasFilters && (
               <Button variant="outline" onClick={clearFilters}>
-                Clear filters
+                {tCommon('clear_filters', { defaultValue: 'Clear filters' })}
               </Button>
             )}
           </div>
