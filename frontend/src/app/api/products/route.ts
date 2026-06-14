@@ -11,11 +11,20 @@ export async function GET(request: Request) {
     const pricing = searchParams.get('pricing') || '';
     const confidence = searchParams.get('confidence') || '';
     const sort = searchParams.get('sort') || 'recent';
+    const contentType = searchParams.get('content_type') || 'product'; // Default to products only
 
     let query = supabase
       .from('products')
       .select('*', { count: 'exact' })
       .eq('availability_status', 'active');
+
+    // Filter by content type (product or news)
+    if (contentType === 'product') {
+      query = query.or('content_type.eq.product,content_type.is.null');
+    } else if (contentType === 'news') {
+      query = query.eq('content_type', 'news');
+    }
+    // If contentType is 'all', don't filter
 
     if (search) {
       query = query.or(

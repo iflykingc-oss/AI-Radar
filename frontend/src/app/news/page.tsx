@@ -101,7 +101,7 @@ export default function NewsPage() {
       const params = new URLSearchParams();
       params.set('page', String(page));
       params.set('limit', '20');
-      params.set('content_type', 'news');
+      params.set('content_type', 'news'); // Explicitly request news only
       if (search) params.set('search', search);
       if (selectedSource) params.set('source', selectedSource);
       if (selectedCategory) params.set('category', selectedCategory);
