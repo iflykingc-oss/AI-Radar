@@ -75,12 +75,14 @@ export class AIHotSource implements DataSource {
 
     const description: string = item.description || '';
     const url: string = item.url || '';
-    const source: string = item.source || 'AIhot';
     const tags: string[] = Array.isArray(item.tags) ? item.tags : [];
     const category: string = item.category || 'AI';
 
-    // Extract product name from title
-    const name = this.extractProductName(title);
+    // Determine if this is news or product based on category
+    const isNews = this.isNewsContent(title, description, category);
+
+    // For news, use full title as name; for products, extract product name
+    const name = isNews ? title.substring(0, 100) : (this.extractProductName(title) || title.substring(0, 100));
     if (!name) return null;
 
     // Try to get website URL from the item
@@ -98,11 +100,40 @@ export class AIHotSource implements DataSource {
       github_url: githubUrl,
       tags: tags.length > 0 ? tags : this.deriveTags(title, description),
       category: this.normalizeCategory(category),
+      content_type: isNews ? 'news' : 'product',
       source: 'aihot',
       source_url: url,
       crawled_at: new Date().toISOString(),
       pricing_model: undefined,
     };
+  }
+
+  /**
+   * Determine if content is news based on category and text patterns.
+   */
+  private isNewsContent(title: string, description: string, category: string): boolean {
+    const lower = `${title} ${description} ${category}`.toLowerCase();
+
+    // AIhot categories that are news
+    const newsCategories = ['funding', 'acquisition', 'regulation', 'policy', 'industry', 'research', 'event'];
+    if (newsCategories.some(c => category.toLowerCase().includes(c))) {
+      return true;
+    }
+
+    // News patterns in text
+    const newsPatterns = [
+      /\b(layoff|firing|resign|internal|employees?|staff)\b/i,
+      /\b(acquires?|acquisition|merger|buyout)\b/i,
+      /\b(funding|raises?|raised|series [a-c]|valuation)\b/i,
+      /\b(sues?|lawsuit|legal|regulation|ban)\b/i,
+      /\b(controversy|scandal|backlash|criticism)\b/i,
+      /\b(interview|analysis|editorial|commentary|report)\b/i,
+      /\b(conference|summit|event|keynote)\b/i,
+      /\b(predict|forecast|trend|landscape|market)\b/i,
+    ];
+
+    const newsScore = newsPatterns.filter(p => p.test(lower)).length;
+    return newsScore >= 2;
   }
 
   private extractProductName(title: string): string | null {
