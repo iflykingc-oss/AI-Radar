@@ -83,11 +83,12 @@ async function runCrawlCycle(): Promise<void> {
   console.log(`[main] Crawl cycle started at ${new Date().toISOString()}`);
   console.log('='.repeat(60));
 
-  // Global timeout: 5 minutes max per crawl cycle
+  // Global timeout: 10 minutes max per crawl cycle
+  // Increased from 5 min to handle 150+ RSS feeds
   const globalTimeout = setTimeout(() => {
-    console.error('[main] Global timeout (5 min) reached. Forcing exit.');
+    console.error('[main] Global timeout (10 min) reached. Forcing exit.');
     process.exit(1);
-  }, 5 * 60 * 1000);
+  }, 10 * 60 * 1000);
 
   // Step 1: Fetch from all data sources
   const sources = initializeSources();
