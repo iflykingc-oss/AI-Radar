@@ -236,6 +236,7 @@ export default function DiscoverPage() {
               <button
                 className="absolute right-4 top-1/2 -translate-y-1/2"
                 onClick={() => setSearch('')}
+                aria-label="Clear search"
               >
                 <X className="h-5 w-5 text-muted-foreground" />
               </button>
@@ -484,7 +485,7 @@ export default function DiscoverPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-8">
+              <div className="flex items-center justify-center gap-2 mt-8" role="navigation" aria-label="Pagination">
                 <Button
                   variant="outline"
                   size="sm"
@@ -493,6 +494,7 @@ export default function DiscoverPage() {
                     setPage(page - 1);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
+                  aria-label="Previous page"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -524,6 +526,7 @@ export default function DiscoverPage() {
                     setPage(page + 1);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
+                  aria-label="Next page"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
