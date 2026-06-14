@@ -40,7 +40,7 @@ export class BlueskySource implements DataSource {
 
     for (const query of AI_QUERIES) {
       try {
-        const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(query)}&limit=${MAX_PER_QUERY}`;
+        const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(query)}&limit=${MAX_PER_QUERY}&sort=latest`;
 
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 15000);

@@ -65,18 +65,31 @@ const AI_ACCOUNTS = [
 
 /**
  * RSSHub instance URL. Can be configured via environment variable.
+ * Self-hosted instances work better than public ones for Twitter.
  */
 const RSSHUB_URL = process.env.TWITTER_RSSHub_URL || 'https://rsshub.app';
 
 /**
  * Twitter auth token for RSSHub (optional, improves reliability).
+ * Get from browser cookies when logged into Twitter.
  */
 const AUTH_TOKEN = process.env.TWITTER_AUTH_TOKEN;
 
 /**
  * Twitter API v2 bearer token (optional, fallback method).
+ * Get from https://developer.twitter.com/en/portal/dashboard
  */
 const BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
+
+/**
+ * Nitter instances to try as fallback for Twitter RSS.
+ * Some public instances may still work.
+ */
+const NITTER_INSTANCES = [
+  'https://nitter.privacydev.net',
+  'https://nitter.poast.org',
+  'https://nitter.woodland.cafe',
+];
 
 /**
  * Maximum tweets to fetch per account.
@@ -93,6 +106,7 @@ export class TwitterSource implements DataSource {
     console.log(`[${this.name}] Fetching AI tweets from ${AI_ACCOUNTS.length} accounts...`);
 
     // Strategy 1: Try RSSHub
+    console.log(`[${this.name}] Trying RSSHub...`);
     const rsshubProducts = await this.fetchViaRSSHub();
     for (const p of rsshubProducts) {
       const key = p.name.toLowerCase();
@@ -102,8 +116,22 @@ export class TwitterSource implements DataSource {
       }
     }
 
-    // Strategy 2: Try Twitter API if bearer token is available
+    // Strategy 2: Try Nitter instances if RSSHub failed
+    if (products.length < 10) {
+      console.log(`[${this.name}] RSSHub returned few results, trying Nitter...`);
+      const nitterProducts = await this.fetchViaNitter();
+      for (const p of nitterProducts) {
+        const key = p.name.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          products.push(p);
+        }
+      }
+    }
+
+    // Strategy 3: Try Twitter API if bearer token is available
     if (BEARER_TOKEN && products.length < 50) {
+      console.log(`[${this.name}] Trying Twitter API...`);
       const apiProducts = await this.fetchViaAPI();
       for (const p of apiProducts) {
         const key = p.name.toLowerCase();
@@ -204,6 +232,60 @@ export class TwitterSource implements DataSource {
         }
       } catch {
         // Skip failed account
+      }
+    }
+
+    return products;
+  }
+
+  /**
+   * Fetch tweets via Nitter RSS feeds.
+   * Nitter is an open-source Twitter front-end that provides RSS feeds.
+   */
+  private async fetchViaNitter(): Promise<CrawledProduct[]> {
+    const products: CrawledProduct[] = [];
+
+    // Only check a subset of accounts to avoid rate limiting
+    const accountsToCheck = AI_ACCOUNTS.slice(0, 15);
+
+    for (const instance of NITTER_INSTANCES) {
+      if (products.length >= 20) break;
+
+      for (const account of accountsToCheck) {
+        try {
+          const url = `${instance}/${account.handle}/rss`;
+          console.log(`[${this.name}] Nitter: Fetching @${account.handle} from ${instance}...`);
+
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 10000);
+          const response = await fetch(url, {
+            signal: controller.signal,
+            headers: { 'Accept': 'application/rss+xml, application/xml, text/xml' },
+          });
+          clearTimeout(timeout);
+
+          if (!response.ok) {
+            continue;
+          }
+
+          const xmlText = await response.text();
+          const items = this.parseItems(xmlText);
+
+          for (const item of items.slice(0, 5)) {
+            const product = this.extractProductFromTweet(item, account);
+            if (product) {
+              products.push(product);
+            }
+          }
+
+          // If we got results from this instance, use it
+          if (products.length > 0) {
+            console.log(`[${this.name}] Nitter instance ${instance} works!`);
+            break;
+          }
+        } catch {
+          // Try next instance
+        }
       }
     }
 
