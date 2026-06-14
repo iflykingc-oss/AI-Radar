@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { getSourceIcon, getSourceColor } from '@/lib/constants';
+import { NewsListSkeleton } from '@/components/skeletons/NewsSkeleton';
 
 interface NewsItem {
   id: string;
@@ -230,9 +231,7 @@ export default function NewsPage() {
 
         {/* News List */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+          <NewsListSkeleton count={5} />
         ) : error ? (
           <div className="text-center py-20">
             <Newspaper className="h-12 w-12 mx-auto text-destructive mb-4" />
