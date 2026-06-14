@@ -9,6 +9,7 @@ import { Bookmark, ExternalLink, Github, Star, ArrowUpRight } from 'lucide-react
 import { getConfidenceLevel, formatConfidenceScore } from '@/lib/utils';
 import { getStatusConfig, getPricingConfig } from '@/lib/constants';
 import { LoginModal } from '@/components/auth/LoginModal';
+import { useToast } from '@/hooks/useToast';
 import { useTranslations } from 'next-intl';
 
 interface ProductCardProps {
@@ -50,6 +51,7 @@ export default function ProductCard({
 }: ProductCardProps) {
   const [inWatchlist, setInWatchlist] = useState(is_in_watchlist);
   const [loginOpen, setLoginOpen] = useState(false);
+  const { toast } = useToast();
   const tCommon = useTranslations('common');
 
   const confidence = getConfidenceLevel(confidence_score);
@@ -71,9 +73,20 @@ export default function ProductCard({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ product_id: id }),
       });
-      if (res.ok) setInWatchlist(!inWatchlist);
+      if (res.ok) {
+        setInWatchlist(!inWatchlist);
+        toast({
+          type: 'success',
+          title: inWatchlist ? 'Removed from watchlist' : 'Added to watchlist',
+          duration: 2000,
+        });
+      }
     } catch (e) {
       console.error('Watchlist toggle failed:', e);
+      toast({
+        type: 'error',
+        title: 'Failed to update watchlist',
+      });
     }
   };
 

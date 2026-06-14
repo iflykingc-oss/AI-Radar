@@ -9,6 +9,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { PageTransition } from '@/components/transitions/PageTransition';
 import { ToastProvider } from '@/hooks/useToast';
 import { ToastViewport } from '@/components/ui/Toast';
+import ScrollToTop from '@/components/ScrollToTop';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -65,6 +66,7 @@ export default async function RootLayout({
                   <Footer />
                 </div>
               </ErrorBoundary>
+              <ScrollToTop />
               <ToastViewport />
             </ToastProvider>
           </ThemeProvider>

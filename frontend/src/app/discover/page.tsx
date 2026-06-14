@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
 import { ProductCardGridSkeleton } from '@/components/skeletons/ProductCardSkeleton';
@@ -25,9 +25,12 @@ import {
   LayoutGrid,
   List,
   ArrowUpDown,
+  Clock,
+  Trash2,
 } from 'lucide-react';
 import { Database } from '@/lib/supabase/types';
 import { useTranslations } from 'next-intl';
+import { useSearchHistory } from '@/hooks/useSearchHistory';
 
 type Product = Database['public']['Tables']['products']['Row'];
 
@@ -86,6 +89,9 @@ export default function DiscoverPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const { history, addToHistory, removeFromHistory, clearHistory } = useSearchHistory();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [filterOpen, setFilterOpen] = useState(false);
@@ -227,10 +233,19 @@ export default function DiscoverPage() {
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
+              ref={searchInputRef}
               className="pl-12 pr-4 h-12 text-base"
               placeholder={t('search_placeholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && search.trim()) {
+                  addToHistory(search.trim());
+                  setSearchFocused(false);
+                }
+              }}
             />
             {search && (
               <button
@@ -240,6 +255,46 @@ export default function DiscoverPage() {
               >
                 <X className="h-5 w-5 text-muted-foreground" />
               </button>
+            )}
+
+            {/* Search History Dropdown */}
+            {searchFocused && history.length > 0 && !search && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg z-50 overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/50">
+                  <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Recent searches
+                  </span>
+                  <button
+                    onClick={clearHistory}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Clear
+                  </button>
+                </div>
+                {history.map((term) => (
+                  <div
+                    key={term}
+                    className="flex items-center justify-between px-3 py-2 hover:bg-muted/50 cursor-pointer group"
+                    onClick={() => {
+                      setSearch(term);
+                      addToHistory(term);
+                      setSearchFocused(false);
+                    }}
+                  >
+                    <span className="text-sm">{term}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFromHistory(term);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>

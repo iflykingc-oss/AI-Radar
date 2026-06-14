@@ -27,7 +27,9 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { getConfidenceLevel, formatConfidenceScore } from '@/lib/utils';
+import { getStatusConfig, getPricingConfig } from '@/lib/constants';
 import { LoginModal } from '@/components/auth/LoginModal';
+import { useToast } from '@/hooks/useToast';
 import { useTranslations } from 'next-intl';
 
 interface ProductDetail {
@@ -104,6 +106,7 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
   const tCommon = useTranslations('common');
   const tStatus = useTranslations('availability');
   const tPricing = useTranslations('pricing_models');
+  const { toast } = useToast();
 
   const [inWatchlist, setInWatchlist] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -152,14 +155,35 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
       return;
     }
     try {
+      const method = inWatchlist ? 'DELETE' : 'POST';
       const res = await fetch('/api/watchlist', {
-        method: inWatchlist ? 'DELETE' : 'POST',
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ product_id: product.id }),
       });
-      if (res.ok) setInWatchlist(!inWatchlist);
+      if (res.ok) {
+        setInWatchlist(!inWatchlist);
+        toast({
+          type: 'success',
+          title: inWatchlist ? 'Removed from watchlist' : 'Added to watchlist',
+          description: inWatchlist
+            ? `${product.name} has been removed from your watchlist`
+            : `${product.name} has been added to your watchlist`,
+        });
+      } else {
+        toast({
+          type: 'error',
+          title: 'Failed to update watchlist',
+          description: 'Please try again later',
+        });
+      }
     } catch (e) {
       console.error('Watchlist toggle failed:', e);
+      toast({
+        type: 'error',
+        title: 'Failed to update watchlist',
+        description: 'Please check your connection and try again',
+      });
     }
   };
 
