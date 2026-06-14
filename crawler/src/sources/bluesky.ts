@@ -29,6 +29,15 @@ const AI_QUERIES = [
  */
 const MAX_PER_QUERY = 15;
 
+/**
+ * Bluesky AI feeds to monitor.
+ * These are curated feeds that surface AI-related content.
+ */
+const AI_FEEDS = [
+  'at://did:plc:z72i7hd7mk2jflxj5gkadyil/app.bsky.feed.generator/ai',
+  'at://did:plc:z72i7hd7mk2jflxj5gkadyil/app.bsky.feed.generator/ai-news',
+];
+
 export class BlueskySource implements DataSource {
   readonly name = 'bluesky';
 
@@ -38,12 +47,13 @@ export class BlueskySource implements DataSource {
 
     console.log(`[${this.name}] Fetching AI posts from Bluesky...`);
 
+    // Strategy 1: Try search API
     for (const query of AI_QUERIES) {
       try {
         const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(query)}&limit=${MAX_PER_QUERY}&sort=latest`;
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
+        const timeout = setTimeout(() => controller.abort(), 10000);
         const response = await fetch(url, {
           signal: controller.signal,
           headers: { 'Accept': 'application/json' },
@@ -51,12 +61,12 @@ export class BlueskySource implements DataSource {
         clearTimeout(timeout);
 
         if (!response.ok) {
-          console.warn(`[${this.name}] HTTP ${response.status} for query: ${query}`);
+          console.warn(`[${this.name}] Search API HTTP ${response.status} for: ${query}`);
           continue;
         }
 
-        const data = await response.json() as any;
-        const posts = data?.posts || [];
+        const data: any = await response.json();
+        const posts: any[] = data?.posts || [];
 
         for (const post of posts) {
           const product = this.extractProduct(post);
@@ -70,7 +80,50 @@ export class BlueskySource implements DataSource {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        console.error(`[${this.name}] Error fetching query "${query}": ${message}`);
+        console.error(`[${this.name}] Search error for "${query}": ${message}`);
+      }
+    }
+
+    // Strategy 2: Try feed endpoints if search returned few results
+    if (products.length < 10) {
+      console.log(`[${this.name}] Search returned ${products.length} products, trying feeds...`);
+      for (const feedUri of AI_FEEDS) {
+        try {
+          const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.getFeed?feed=${encodeURIComponent(feedUri)}&limit=30`;
+
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 10000);
+          const response = await fetch(url, {
+            signal: controller.signal,
+            headers: { 'Accept': 'application/json' },
+          });
+          clearTimeout(timeout);
+
+          if (!response.ok) {
+            console.warn(`[${this.name}] Feed API HTTP ${response.status}`);
+            continue;
+          }
+
+          const data: any = await response.json();
+          const feedItems: any[] = data?.feed || [];
+
+          for (const item of feedItems) {
+            const post = item.post;
+            if (!post) continue;
+
+            const product = this.extractProduct(post);
+            if (product) {
+              const key = product.name.toLowerCase();
+              if (!seen.has(key)) {
+                seen.add(key);
+                products.push(product);
+              }
+            }
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error(`[${this.name}] Feed error: ${message}`);
+        }
       }
     }
 
