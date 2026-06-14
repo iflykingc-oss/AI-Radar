@@ -10,6 +10,7 @@
  * This pipeline runs after deduplication and before scoring.
  */
 import { CrawledProduct } from '../types.js';
+import { classify } from './classifier.js';
 
 /**
  * Maximum length for the description field.
@@ -100,87 +101,15 @@ function enrichDescription(product: CrawledProduct): void {
 }
 
 /**
- * Classify content as 'product' or 'news' based on title and description.
- * News articles typically discuss industry events, not specific tools/products.
+ * Classify content as 'product' or 'news' using the intelligent classifier.
+ * Uses multi-dimensional analysis: source weight, title structure, entities, URLs, verbs.
  */
 function enrichContentType(product: CrawledProduct): void {
-  // If already set, keep it
+  // If already set by the source (e.g., AIhot), keep it
   if (product.content_type) return;
 
-  const text = `${product.name} ${product.description}`.toLowerCase();
-
-  // Strong news indicators in title
-  const newsPatterns = [
-    // Company internal/management news
-    /\b(layoff|firing|resign|quit|internal|employees?|staff|workforce|restructur)\b/i,
-    /\b(acquires?|acquisition|merger|buyout|deal)\b/i,
-    /\b(funding|raises?|raised|series [a-c]|valuation|invest)\b/i,
-    /\b(sues?|lawsuit|legal|regulation|regulatory|ban|ban)\b/i,
-    /\b(controversy|scandal|backlash|criticism|complaint)\b/i,
-
-    // Industry analysis/opinion
-    /\b(why |how |opinion|analysis|editorial|commentary|predict)\b/i,
-    /\b(future of|state of|trend|landscape|market)\b/i,
-    /\b(interview|q&a|profile|story|report)\b/i,
-
-    // Event coverage
-    /\b(conference|summit|event|keynote|announce)\b.*\b(day|week|recap|highlights?)\b/i,
-    /\bCES\b.*\b(2025|2026)\b/i,
-    /\b(GTC|WWDC|Google\s+I\/O|re:MARS)\b/i,
-
-    // Policy/governance
-    /\b(EU|US|China|government|policy|law|act|bill)\b.*\b(AI|artificial intelligence)\b/i,
-    /\b(safety|alignment|ethics|bias|fairness)\b.*\b(report|study|research)\b/i,
-
-    // Meta-commentary about companies
-    /\b(OpenAI|Google|Meta|Microsoft|Anthropic)\b.*\b(says|announces|plans|strategy|internal)\b/i,
-  ];
-
-  // Strong product indicators
-  const productPatterns = [
-    // Launch/release language
-    /\b(launch|launches|launched|release|released|releases)\b/i,
-    /\b(introduce|introduces|introduced|unveil|unveils|unveiled)\b/i,
-    /\b(now available|now live|just launched|just released)\b/i,
-    /\b(new tool|new app|new platform|new service|new API|new model)\b/i,
-
-    // Product-specific language
-    /\b(v\d+\.\d+|version \d+|update|upgrade)\b/i,
-    /\b(free|open.?source|pricing|plan|tier|subscription)\b/i,
-    /\b(sign up|get started|try it|download|install)\b/i,
-    /\b(demo|tutorial|guide|documentation|docs)\b/i,
-
-    // Technical product details
-    /\b(API|SDK|CLI|plugin|extension|integration)\b/i,
-    /\b(docker|npm|pip|brew|install)\b/i,
-    /\b(github\.com|npmjs\.com|pypi\.org)\b/i,
-  ];
-
-  // Count matches
-  const newsScore = newsPatterns.filter(p => p.test(text)).length;
-  const productScore = productPatterns.filter(p => p.test(text)).length;
-
-  // Check if URL points to a product
-  const hasProductUrl = product.website_url && (
-    product.website_url.includes('github.com') ||
-    product.website_url.includes('npmjs.com') ||
-    product.website_url.includes('pypi.org') ||
-    product.website_url.includes('huggingface.co') ||
-    product.website_url.includes('producthunt.com')
-  );
-
-  // Decision logic
-  if (newsScore > productScore && newsScore >= 2) {
-    product.content_type = 'news';
-  } else if (productScore > newsScore || hasProductUrl) {
-    product.content_type = 'product';
-  } else if (newsScore >= 2) {
-    product.content_type = 'news';
-  } else {
-    // Default to product for sources that are product-focused
-    const productSources = ['producthunt', 'github', 'npm', 'huggingface'];
-    product.content_type = productSources.includes(product.source) ? 'product' : 'product';
-  }
+  // Use the classifier for intelligent classification
+  product.content_type = classify(product);
 }
 
 /**

@@ -16,7 +16,7 @@ import { XMLParser } from 'fast-xml-parser';
  * Organized by category for maintainability.
  */
 const RSS_FEEDS: Array<{ url: string; name: string }> = [
-  // === Tech Media ===
+  // === Tech Media (新闻为主) ===
   { url: 'https://techcrunch.com/category/artificial-intelligence/feed/', name: 'TechCrunch AI' },
   { url: 'https://venturebeat.com/category/ai/feed/', name: 'VentureBeat AI' },
   { url: 'https://www.theverge.com/rss/ai-artificial-intelligence/index.xml', name: 'The Verge AI' },
@@ -34,6 +34,33 @@ const RSS_FEEDS: Array<{ url: string; name: string }> = [
   { url: 'https://www.nature.com/subjects/machine-learning.rss', name: 'Nature ML' },
   { url: 'https://www.nature.com/natmachintell.rss', name: 'Nature Machine Intelligence' },
   { url: 'https://www.science.org/rss/news_current.xml', name: 'Science Magazine' },
+
+  // === 更多科技新闻 ===
+  { url: 'https://www.engadget.com/rss.xml', name: 'Engadget' },
+  { url: 'https://www.zdnet.com/topic/artificial-intelligence/rss.xml', name: 'ZDNet AI' },
+  { url: 'https://www.cnet.com/rss/ai/', name: 'CNET AI' },
+  { url: 'https://singularityhub.com/feed/', name: 'Singularity Hub' },
+  { url: 'https://www.futurism.com/feeds/latest', name: 'Futurism' },
+  { url: 'https://spectrum.ieee.org/feeds/topic/artificial-intelligence.rss', name: 'IEEE Spectrum AI' },
+  { url: 'https://www.axios.com/feeds/feed.rss', name: 'Axios' },
+  { url: 'https://www.cnbc.com/id/10000664/device/rss/rss.html', name: 'CNBC Tech' },
+  { url: 'https://feeds.feedburner.com/ign/all', name: 'IGN' },
+  { url: 'https://www.reuters.com/rssFeed/technologyNews', name: 'Reuters Tech' },
+  { url: 'https://feeds.bbci.co.uk/news/technology/rss.xml', name: 'BBC Tech' },
+  { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml', name: 'NY Times Tech' },
+
+  // === AI 专业新闻 ===
+  { url: 'https://the-decoder.com/feed/', name: 'The Decoder' },
+  { url: 'https://www.unite.ai/feed/', name: 'Unite AI' },
+  { url: 'https://neurosciencenews.com/feed/', name: 'Neuroscience News' },
+  { url: 'https://www.datasciencecentral.com/feed/', name: 'Data Science Central' },
+  { url: 'https://analyticsindiamag.com/feed/', name: 'Analytics India Magazine' },
+  { url: 'https://www.kdnuggets.com/feed', name: 'KDnuggets' },
+  { url: 'https://machinelearningmastery.com/feed/', name: 'Machine Learning Mastery' },
+  { url: 'https://www.freecodecamp.org/news/rss/', name: 'freeCodeCamp' },
+  { url: 'https://dev.to/feed', name: 'Dev.to' },
+  { url: 'https://medium.com/feed/tag/artificial-intelligence', name: 'Medium AI' },
+  { url: 'https://towardsdatascience.com/feed', name: 'Towards Data Science' },
 
   // === Chinese Media ===
   { url: 'https://www.jiqizhixin.com/rss', name: '机器之心' },
