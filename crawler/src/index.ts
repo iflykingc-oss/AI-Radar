@@ -41,7 +41,7 @@ const DEFAULT_CRON_SCHEDULE = '0 2 * * *';
  * Minimum confidence score threshold for products to be stored.
  * Products below this score are discarded.
  */
-const MIN_CONFIDENCE_SCORE = 30;
+const MIN_CONFIDENCE_SCORE = 20;
 
 /**
  * Initialize all data sources.

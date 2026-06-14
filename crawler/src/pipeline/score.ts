@@ -8,11 +8,11 @@
  * Reference: luban "宁缺毋滥" (rather lack than滥) quality threshold
  *
  * Scoring rules:
- * - Base score: 20 (every product starts here)
- * - Multi-source verification (2+ sources mention it): +30
- * - GitHub stars > 100: +20
+ * - Base score: 30 (every product starts here)
+ * - Multi-source verification (2+ sources mention it): +25
+ * - GitHub stars > 100: +15
  * - Has official website: +10
- * - Recently active (updated in last 30 days): +20
+ * - Recently active (updated in last 30 days): +15
  * - Same-source decay: penalize products from dominant sources
  * - Quality threshold: minimum 30 to be included
  * - Maximum score: 100
@@ -20,19 +20,19 @@
 import { ScoredProduct, CrawledProduct } from '../types.js';
 
 /** Base score assigned to every product */
-const BASE_SCORE = 20;
+const BASE_SCORE = 30;
 
 /** Score bonus when product is mentioned by 2+ data sources */
-const MULTI_SOURCE_BONUS = 30;
+const MULTI_SOURCE_BONUS = 25;
 
 /** Score bonus when GitHub stars > 100 */
-const GITHUB_STARS_BONUS = 20;
+const GITHUB_STARS_BONUS = 15;
 
 /** Score bonus when product has an official website URL */
 const WEBSITE_BONUS = 10;
 
 /** Score bonus when product was recently active (within 30 days) */
-const RECENT_ACTIVITY_BONUS = 20;
+const RECENT_ACTIVITY_BONUS = 15;
 
 /** Maximum possible score */
 const MAX_SCORE = 100;
@@ -46,7 +46,7 @@ const RECENT_ACTIVITY_THRESHOLD_MS = 30 * 24 * 60 * 60 * 1000;
  * Quality threshold - products below this score are filtered out.
  * Reference: luban "宁缺毋滥" pattern
  */
-const QUALITY_THRESHOLD = 30;
+const QUALITY_THRESHOLD = 20;
 
 /**
  * Maximum ratio of products from a single source.
