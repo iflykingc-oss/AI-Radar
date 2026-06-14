@@ -29,7 +29,7 @@ export interface CrawledProduct {
   /** High-level category (e.g. "LLM", "Image Generation", "Dev Tools") */
   category: string;
   /** Which data source discovered this product */
-  source: 'producthunt' | 'github' | 'hackernews' | 'rss' | 'aihot' | 'arxiv' | 'devto' | 'lobsters' | 'npm' | 'reddit' | 'ossinsight' | 'huggingface' | 'telegram';
+  source: 'producthunt' | 'github' | 'hackernews' | 'rss' | 'aihot' | 'arxiv' | 'devto' | 'lobsters' | 'npm' | 'reddit' | 'ossinsight' | 'huggingface' | 'telegram' | 'twitter' | 'bluesky';
   /** Original URL where the product was found */
   source_url: string;
   /** ISO timestamp of when this record was crawled */

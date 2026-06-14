@@ -27,6 +27,8 @@ import { OSSInsightSource } from './sources/ossinsight.js';
 import { HuggingFaceSource } from './sources/huggingface.js';
 import { TelegramSource } from './sources/telegram.js';
 import { AIHotSource } from './sources/aihot.js';
+import { TwitterSource } from './sources/twitter.js';
+import { BlueskySource } from './sources/bluesky.js';
 import { deduplicate } from './pipeline/dedup.js';
 import { enrich } from './pipeline/enrich.js';
 import { scoreProducts } from './pipeline/score.js';
@@ -62,6 +64,8 @@ function initializeSources(): DataSource[] {
     new HuggingFaceSource(),
     new TelegramSource(),
     new AIHotSource(),
+    new TwitterSource(),
+    new BlueskySource(),
   ];
 }
 
