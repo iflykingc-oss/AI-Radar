@@ -10,6 +10,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Search, X, Download, Link, Highlighter } from 'lucide-react';
 import { Database } from '@/lib/supabase/types';
 import { useTranslations } from 'next-intl';
+import { useToast } from '@/hooks/useToast';
 import { exportToCSV } from '@/lib/export';
 
 type Product = Database['public']['Tables']['products']['Row'];
@@ -80,6 +81,7 @@ export default function ComparePage() {
   const t = useTranslations('compare');
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -140,9 +142,18 @@ export default function ComparePage() {
     const url = `${window.location.origin}/compare?ids=${ids}`;
     try {
       await navigator.clipboard.writeText(url);
-      // Could show a toast here
+      toast({
+        type: 'success',
+        title: 'Link copied!',
+        description: 'Comparison link has been copied to clipboard',
+        duration: 2000,
+      });
     } catch (e) {
       console.error('Copy failed:', e);
+      toast({
+        type: 'error',
+        title: 'Failed to copy link',
+      });
     }
   };
 
