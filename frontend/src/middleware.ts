@@ -1,15 +1,12 @@
-import createMiddleware from 'next-intl/middleware';
-import { defaultLocale, locales } from './i18n/config';
+// i18n handled via cookie + NextIntlClientProvider in layout.tsx
+// No middleware needed — locale switching works by setting NEXT_LOCALE cookie and reloading
 
-// Non-routing mode: middleware only reads locale from cookie, does NOT redirect
-// Pages stay at root paths (/discover, /trends, etc.) without locale prefix
-export default createMiddleware({
-  defaultLocale,
-  locales,
-  localePrefix: 'as-needed',
-});
+import { NextResponse } from 'next/server';
+
+export function middleware() {
+  return NextResponse.next();
+}
 
 export const config = {
-  // Only match non-API, non-static-file routes
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)'],
+  matcher: [],
 };
