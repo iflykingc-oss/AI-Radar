@@ -18,16 +18,20 @@ export async function GET(request: Request) {
       .select('*', { count: 'exact' })
       .eq('availability_status', 'active');
 
-    // Filter by content type (product or news)
+    // Filter by content type (product, news, article, or all)
     if (contentType === 'product') {
-      // Only show products, exclude news and non-AI content
-      query = query.or('content_type.eq.product,content_type.is.null');
-      // Also filter out items with clearly non-AI categories
-      query = query.not('category', 'in', '("Business","Finance","Politics","Sports","Entertainment")');
+      // Only show actual products (tools, platforms, services)
+      query = query.eq('content_type', 'product');
     } else if (contentType === 'news') {
+      // Show news (industry updates, funding, etc.)
       query = query.eq('content_type', 'news');
+    } else if (contentType === 'article') {
+      // Show articles (tutorials, discussions, analysis)
+      query = query.eq('content_type', 'article');
+    } else if (contentType === 'all') {
+      // Show everything - no filter
     }
-    // If contentType is 'all', don't filter
+    // Default: show only products
 
     if (search) {
       query = query.or(

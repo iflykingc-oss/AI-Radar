@@ -114,8 +114,10 @@ function enrichDescription(product: CrawledProduct): void {
 }
 
 /**
- * Classify content as 'product' or 'news' using the intelligent classifier.
- * Uses multi-dimensional analysis: source weight, title structure, entities, URLs, verbs.
+ * Classify content as 'product', 'news', or 'article' using the intelligent classifier.
+ * - product: 可使用的工具、平台、服务
+ * - news: 行业动态、融资、收购
+ * - article: 教程、分析、讨论
  */
 function enrichContentType(product: CrawledProduct): void {
   // If already set by the source (e.g., AIhot), keep it
