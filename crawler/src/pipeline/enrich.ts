@@ -44,12 +44,15 @@ export function enrich(products: CrawledProduct[]): CrawledProduct[] {
     // 设置 content_type
     product.content_type = result.content_type;
 
-    // 只保留产品和新闻（丢弃文章和讨论）
+    // 丢弃低置信度内容
+    if (result.level === 'discard' && result.content_type === 'article') {
+      discarded++;
+      continue;
+    }
+
+    // 保留产品、新闻和讨论
     if (result.level === 'discard') {
       discarded++;
-      if (discarded <= 10) {
-        console.log(`[enrich] Discarded: "${product.name}" reason:${result.filter_reason} score:${result.final_score}`);
-      }
       continue;
     }
 

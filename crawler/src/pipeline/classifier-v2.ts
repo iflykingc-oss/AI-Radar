@@ -115,6 +115,9 @@ const ENTITY_EXTRACT_PATTERNS: Array<[RegExp, number]> = [
 
   // 优先级7：任何看起来像产品名的词（2-20字符，包含字母）
   [/^([A-Za-z][\w]{1,19})$/, 0.4],
+
+  // 优先级8：从 "Show HN: xxx" 或 "Launch HN: xxx" 中提取
+  [/^(?:Show|Launch)\s+HN:\s+(.+)$/i, 0.8],
 ];
 
 // 5. 产品交付形态特征
