@@ -102,16 +102,19 @@ const ENTITY_EXTRACT_PATTERNS: Array<[RegExp, number]> = [
   // 优先级3：版本绑定
   [/([\w一-龥\s]{2,30})\s+v?\d+\.\d+(\.\d+)?/, 0.70],
 
-  // 优先级4：专有名词（首字母大写，2-30字符）
-  // 匹配 "CrankGPT", "LangChain", "Claude 4" 等
-  [/\b([A-Z][\w]{1,29}(?:\s+[A-Z][\w]{1,29}){0,2})\b/, 0.5],
+  // 优先级4：带 AI/ML 后缀的词（最宽松）
+  // 匹配 "CrankGPT", "LangChain", "Claude4" 等
+  [/([A-Za-z][\w]{1,20}(?:AI|GPT|LM|ML|Bot|Agent|Copilot|Chain|Flow|Mind|Lab|Hub|Kit))/i, 0.6],
 
-  // 优先级5：带 AI/ML 后缀的词
-  // 匹配 "xxxAI", "xxxGPT", "xxxLM" 等
-  [/\b([\w]{2,20}(?:AI|GPT|LM|ML|Bot|Agent|Copilot))\b/i, 0.6],
+  // 优先级5：专有名词（首字母大写，2-30字符）
+  // 匹配 "CrankGPT", "LangChain", "Claude 4" 等
+  [/([A-Z][a-z][\w]{1,29}(?:\s+[A-Z][a-z][\w]{1,29}){0,2})/, 0.5],
 
   // 优先级6：中文产品名
-  [/\b([一-龥]{2,10}(?:AI|助手|工具|平台|模型))\b/, 0.5],
+  [/([一-龥]{2,10}(?:AI|助手|工具|平台|模型))/, 0.5],
+
+  // 优先级7：任何看起来像产品名的词（2-20字符，包含字母）
+  [/^([A-Za-z][\w]{1,19})$/, 0.4],
 ];
 
 // 5. 产品交付形态特征
@@ -140,8 +143,8 @@ const NEGATIVE_FEATURES: Array<[RegExp, number]> = [
   [/\b(ask|discuss|question|讨论|提问|求助)\b/i, 10],
 ];
 
-// 8. 判定阈值
-const THRESHOLD = { high: 85, mid: 70 };
+// 8. 判定阈值（降低以保留更多内容）
+const THRESHOLD = { high: 60, mid: 40 };
 
 // 9. 知名通用软件（不视为独立新产品）
 const WELL_KNOWN_SOFTWARE = new Set([
