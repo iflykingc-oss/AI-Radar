@@ -28,8 +28,8 @@ export interface CrawledProduct {
   tags: string[];
   /** High-level category (e.g. "LLM", "Image Generation", "Dev Tools") */
   category: string;
-  /** Content type: 'product' for tools/apps, 'news' for industry news, 'article' for tutorials/discussions */
-  content_type?: 'product' | 'news' | 'article';
+  /** Content type: 'product' for tools/apps, 'news' for industry news, 'article' for tutorials, 'discussion' for Q&A */
+  content_type?: 'product' | 'news' | 'article' | 'discussion';
   /** Which data source discovered this product */
   source: 'producthunt' | 'github' | 'hackernews' | 'rss' | 'aihot' | 'arxiv' | 'devto' | 'lobsters' | 'npm' | 'reddit' | 'ossinsight' | 'huggingface' | 'telegram' | 'twitter' | 'bluesky';
   /** Original URL where the product was found */

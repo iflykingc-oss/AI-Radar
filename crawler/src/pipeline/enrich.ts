@@ -10,8 +10,7 @@
  * This pipeline runs after deduplication and before scoring.
  */
 import { CrawledProduct } from '../types.js';
-import { classify } from './classifier.js';
-import { isAIRelated } from './ai-relevance.js';
+import { classifyV2, RawInput } from './classifier-v2.js';
 
 /**
  * Maximum length for the description field.
@@ -26,25 +25,45 @@ const MAX_DESCRIPTION_LENGTH = 500;
  */
 export function enrich(products: CrawledProduct[]): CrawledProduct[] {
   const filtered: CrawledProduct[] = [];
+  let productCount = 0;
+  let newsCount = 0;
+  let articleCount = 0;
+  let discarded = 0;
 
   for (const product of products) {
-    // Filter out non-AI content
-    if (!isAIRelated(product.name, product.description, product.tags)) {
-      console.log(`[enrich] Filtered out non-AI content: "${product.name}"`);
+    // 使用 v2 分类器
+    const raw: RawInput = {
+      title: product.name,
+      content: product.description,
+      source: product.source,
+      url: product.website_url || product.source_url || '',
+    };
+
+    const result = classifyV2(raw);
+
+    // 设置 content_type
+    product.content_type = result.content_type;
+
+    // 只保留产品和新闻（丢弃文章和讨论）
+    if (result.level === 'discard') {
+      discarded++;
       continue;
     }
 
     enrichSlug(product);
     enrichName(product);
     enrichDescription(product);
-    enrichContentType(product);
     enrichCategory(product);
     enrichTags(product);
+
+    if (result.content_type === 'product') productCount++;
+    else if (result.content_type === 'news') newsCount++;
+    else articleCount++;
 
     filtered.push(product);
   }
 
-  console.log(`[enrich] AI relevance filter: ${products.length} → ${filtered.length} products`);
+  console.log(`[enrich] Classification: ${products.length} → ${filtered.length} (products:${productCount} news:${newsCount} articles:${articleCount} discarded:${discarded})`);
   return filtered;
 }
 
@@ -111,20 +130,6 @@ function enrichDescription(product: CrawledProduct): void {
   }
 
   product.description = description;
-}
-
-/**
- * Classify content as 'product', 'news', or 'article' using the intelligent classifier.
- * - product: 可使用的工具、平台、服务
- * - news: 行业动态、融资、收购
- * - article: 教程、分析、讨论
- */
-function enrichContentType(product: CrawledProduct): void {
-  // If already set by the source (e.g., AIhot), keep it
-  if (product.content_type) return;
-
-  // Use the classifier for intelligent classification
-  product.content_type = classify(product);
 }
 
 /**
