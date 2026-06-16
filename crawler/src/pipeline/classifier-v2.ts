@@ -33,7 +33,7 @@ export interface PipelineResult {
   product_entity: ProductEntity | null;
   content_type: 'product' | 'news' | 'article' | 'discussion';
   final_score: number;
-  level: 'high' | 'mid' | 'low' | 'discard' | 'update';
+  level: 'high' | 'mid' | 'low' | 'discard' | 'update' | 'keep';
   filter_reason: string;
 }
 
@@ -458,13 +458,14 @@ export function classifyV2(raw: RawInput): PipelineResult {
   // 第一层：前置硬拦截
   const { pass, reason } = preFilter(raw);
   if (!pass) {
-    return { is_product: false, product_entity: null, content_type: defaultType, final_score: 0, level: 'discard', filter_reason: reason };
+    return { is_product: false, product_entity: null, content_type: defaultType, final_score: 0, level: 'keep', filter_reason: reason };
   }
 
   // 第二层：实体提取
   const entity = extractEntity(raw);
   if (!entity) {
-    return { is_product: false, product_entity: null, content_type: defaultType, final_score: 0, level: 'discard', filter_reason: 'no_valid_entity' };
+    // 没有实体，但不丢弃，标记为默认类型（news/article/discussion）
+    return { is_product: false, product_entity: null, content_type: defaultType, final_score: 0, level: 'keep', filter_reason: 'no_valid_entity' };
   }
 
   // 第三层：置信度打分

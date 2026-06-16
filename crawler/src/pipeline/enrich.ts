@@ -44,17 +44,16 @@ export function enrich(products: CrawledProduct[]): CrawledProduct[] {
     // 设置 content_type
     product.content_type = result.content_type;
 
-    // 丢弃低置信度内容
-    if (result.level === 'discard' && result.content_type === 'article') {
+    // 丢弃被硬拦截的内容
+    if (result.filter_reason === 'channel_block_pattern_hit' || result.filter_reason === 'global_negative_pattern_hit') {
       discarded++;
       continue;
     }
 
-    // 保留产品、新闻和讨论
-    if (result.level === 'discard') {
-      discarded++;
-      continue;
-    }
+    // 保留所有其他内容（产品、新闻、文章、讨论）
+    if (result.content_type === 'product') productCount++;
+    else if (result.content_type === 'news') newsCount++;
+    else articleCount++;
 
     enrichSlug(product);
     enrichName(product);
