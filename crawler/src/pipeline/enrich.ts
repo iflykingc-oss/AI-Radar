@@ -47,6 +47,9 @@ export function enrich(products: CrawledProduct[]): CrawledProduct[] {
     // 只保留产品和新闻（丢弃文章和讨论）
     if (result.level === 'discard') {
       discarded++;
+      if (discarded <= 10) {
+        console.log(`[enrich] Discarded: "${product.name}" reason:${result.filter_reason} score:${result.final_score}`);
+      }
       continue;
     }
 
