@@ -162,12 +162,23 @@ async function bulkUpsert(
   let inserted = 0;
   let updated = 0;
 
-  for (let i = 0; i < products.length; i += BATCH_SIZE) {
-    const batch = products.slice(i, i + BATCH_SIZE);
+  // Deduplicate by slug before upserting
+  const seenSlugs = new Set<string>();
+  const uniqueProducts = products.filter((p) => {
+    const slug = p.slug || '';
+    if (seenSlugs.has(slug)) return false;
+    seenSlugs.add(slug);
+    return true;
+  });
+
+  console.log(`[store] Dedup: ${products.length} → ${uniqueProducts.length} unique products`);
+
+  for (let i = 0; i < uniqueProducts.length; i += BATCH_SIZE) {
+    const batch = uniqueProducts.slice(i, i + BATCH_SIZE);
     const now = new Date().toISOString();
     const rows = batch.map((p) => ({
       ...toProductRow(p),
-      created_at: p.created_at || now,  // Preserve original created_at or use current time
+      created_at: p.created_at || now,
       updated_at: now,
     }));
 
