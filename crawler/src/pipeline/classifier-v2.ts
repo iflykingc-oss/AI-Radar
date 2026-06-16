@@ -90,12 +90,28 @@ const INVALID_ENTITY_SET = new Set([
   'transformer', 'rag', 'ai', 'ml', 'python', 'javascript', 'gpt',
 ]);
 
-// 4. 实体提取正则
+// 4. 实体提取正则（按优先级排序）
 const ENTITY_EXTRACT_PATTERNS: Array<[RegExp, number]> = [
+  // 优先级1：发布句式（最可靠）
   [/(?:launch|releas|introduc|unveil)[esd]?\s+["']?([^"',.\n]{2,50})["']?/i, 0.85],
   [/(?:发布|推出|上线|开源)[了]?\s+["']?([^"'：，。\n]{2,30})["']?/, 0.85],
+
+  // 优先级2：定义句式
   [/([^,.\n:]{2,50})\s+(?:is|是|：|:)\s+(?:an?|一款|一个)\s+(?:AI|人工智能|大模型)\s+(?:tool|助手|工具|agent|app|模型)/i, 0.80],
+
+  // 优先级3：版本绑定
   [/([\w一-龥\s]{2,30})\s+v?\d+\.\d+(\.\d+)?/, 0.70],
+
+  // 优先级4：专有名词（首字母大写，2-30字符）
+  // 匹配 "CrankGPT", "LangChain", "Claude 4" 等
+  [/\b([A-Z][\w]{1,29}(?:\s+[A-Z][\w]{1,29}){0,2})\b/, 0.5],
+
+  // 优先级5：带 AI/ML 后缀的词
+  // 匹配 "xxxAI", "xxxGPT", "xxxLM" 等
+  [/\b([\w]{2,20}(?:AI|GPT|LM|ML|Bot|Agent|Copilot))\b/i, 0.6],
+
+  // 优先级6：中文产品名
+  [/\b([一-龥]{2,10}(?:AI|助手|工具|平台|模型))\b/, 0.5],
 ];
 
 // 5. 产品交付形态特征
@@ -248,6 +264,13 @@ function validateEntity(entity: ProductEntity): boolean {
   if (entity.standardized_name.length < 2) return false;
   if (INVALID_ENTITY_SET.has(entity.standardized_name)) return false;
   if (/^[\d\W_]+$/.test(entity.standardized_name)) return false;
+
+  // 过滤纯停用词
+  const stopWords = ['the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+    'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should',
+    'may', 'might', 'can', 'shall', 'this', 'that', 'these', 'those', 'it', 'its'];
+  if (stopWords.includes(entity.standardized_name)) return false;
+
   return true;
 }
 
@@ -289,8 +312,8 @@ function extractEntity(raw: RawInput): ProductEntity | null {
   // 核心度
   entity.importance = calculateImportance(entity, raw.title, raw.content);
 
-  // 核心度过低
-  if (entity.importance < 0.3) return null;
+  // 核心度过低（降低阈值以保留更多内容）
+  if (entity.importance < 0.1) return null;
 
   // 补充官方链接
   if (!entity.official_url && raw.url) {
