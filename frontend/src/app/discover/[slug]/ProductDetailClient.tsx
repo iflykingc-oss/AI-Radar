@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,11 +21,13 @@ import {
   DollarSign,
   Activity,
   ChevronRight,
-  Plus,
   Clock,
   Users,
   Code,
   MessageSquare,
+  Share2,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { getConfidenceLevel, formatConfidenceScore } from '@/lib/utils';
 import { getStatusConfig, getPricingConfig } from '@/lib/constants';
@@ -63,19 +66,12 @@ interface ProductDetail {
   content_type?: string;
 }
 
-const statusConfig: Record<string, { label: string; variant: 'success' | 'warning' | 'destructive' | 'secondary'; icon: string }> = {
-  active: { label: 'Active', variant: 'success', icon: '🟢' },
-  low_active: { label: 'Low Active', variant: 'warning', icon: '🟡' },
-  inactive: { label: 'Inactive', variant: 'destructive', icon: '🔴' },
-  dead: { label: 'Dead', variant: 'destructive', icon: '⚫' },
-};
-
-const pricingConfig: Record<string, { label: string; variant: 'success' | 'default' | 'secondary' | 'outline'; icon: string }> = {
-  free: { label: 'Free', variant: 'success', icon: '🆓' },
-  freemium: { label: 'Freemium', variant: 'default', icon: '🆓💎' },
-  paid: { label: 'Paid', variant: 'secondary', icon: '💰' },
-  open_source: { label: 'Open Source', variant: 'outline', icon: '📦' },
-};
+function getConfidenceText(score: number): string {
+  if (score >= 80) return 'text-success';
+  if (score >= 50) return 'text-warning';
+  if (score >= 20) return 'text-orange-500';
+  return 'text-destructive';
+}
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return 'N/A';
@@ -86,26 +82,22 @@ function formatDate(dateStr: string | null): string {
   });
 }
 
-function getConfidenceBg(score: number): string {
-  if (score >= 80) return 'bg-success/10 border-success/20';
-  if (score >= 50) return 'bg-warning/10 border-warning/20';
-  if (score >= 20) return 'bg-orange-500/10 border-orange-500/20';
-  return 'bg-destructive/10 border-destructive/20';
-}
+function timeAgo(dateStr: string): string {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-function getConfidenceText(score: number): string {
-  if (score >= 80) return 'text-success';
-  if (score >= 50) return 'text-warning';
-  if (score >= 20) return 'text-orange-500';
-  return 'text-destructive';
+  if (seconds < 60) return 'just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  return formatDate(dateStr);
 }
 
 export default function ProductDetailClient({ product }: { product: ProductDetail }) {
   const router = useRouter();
   const t = useTranslations('product_detail');
   const tCommon = useTranslations('common');
-  const tStatus = useTranslations('availability');
-  const tPricing = useTranslations('pricing_models');
   const { toast } = useToast();
 
   const [inWatchlist, setInWatchlist] = useState(false);
@@ -113,6 +105,7 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [similarProducts, setSimilarProducts] = useState<ProductDetail[]>([]);
   const [similarError, setSimilarError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Check auth status
   useEffect(() => {
@@ -187,8 +180,27 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
     }
   };
 
-  const status = statusConfig[product.availability_status] || statusConfig.active;
-  const pricing = pricingConfig[product.pricing_model || 'free'];
+  const handleShare = async () => {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      toast({
+        type: 'success',
+        title: 'Link copied!',
+        duration: 2000,
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({
+        type: 'error',
+        title: 'Failed to copy link',
+      });
+    }
+  };
+
+  const status = getStatusConfig(product.availability_status);
+  const pricing = getPricingConfig(product.pricing_model || 'free');
   const confidenceLevel = getConfidenceLevel(product.confidence_score);
 
   return (
@@ -211,7 +223,7 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
               {/* Logo */}
               <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center overflow-hidden shrink-0 border border-primary/10">
                 {product.logo_url ? (
-                  <img src={product.logo_url} alt={product.name} className="h-14 w-14 object-cover" />
+                  <Image src={product.logo_url} alt={product.name} width={56} height={56} className="object-cover rounded-lg" />
                 ) : (
                   <span className="text-2xl font-bold text-primary">{product.name.charAt(0).toUpperCase()}</span>
                 )}
@@ -229,7 +241,7 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
             {/* Badges */}
             <div className="flex flex-wrap gap-2 mb-4">
               {/* Confidence Score */}
-              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold border ${getConfidenceBg(product.confidence_score)}`}>
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold border ${getConfidenceText(product.confidence_score)}`}>
                 <Activity className="h-3.5 w-3.5" />
                 <span className={getConfidenceText(product.confidence_score)}>
                   {formatConfidenceScore(product.confidence_score)}
@@ -238,14 +250,14 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
               </span>
 
               {/* Status */}
-              <Badge variant={status.variant} className="gap-1">
-                {status.icon} {tStatus(product.availability_status)}
-              </Badge>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
+                {status.label}
+              </span>
 
               {/* Pricing */}
-              <Badge variant={pricing.variant} className="gap-1">
-                {pricing.icon} {tPricing(product.pricing_model || 'free')}
-              </Badge>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${pricing.color}`}>
+                {pricing.label}
+              </span>
 
               {/* Category */}
               {product.category && (
@@ -285,6 +297,14 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
               <Button variant="outline" onClick={handleWatchlistToggle}>
                 <Bookmark className={`mr-2 h-4 w-4 ${inWatchlist ? 'fill-current' : ''}`} />
                 {inWatchlist ? t('in_watchlist') : t('add_watchlist')}
+              </Button>
+              <Button variant="outline" onClick={handleShare}>
+                {copied ? (
+                  <Check className="mr-2 h-4 w-4 text-success" />
+                ) : (
+                  <Share2 className="mr-2 h-4 w-4" />
+                )}
+                {copied ? 'Copied!' : 'Share'}
               </Button>
             </div>
           </div>
@@ -355,7 +375,7 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
                       <Clock className="h-4 w-4" />
                       <span className="text-sm">Updated</span>
                     </div>
-                    <span className="font-medium">{formatDate(product.updated_at)}</span>
+                    <span className="font-medium">{timeAgo(product.updated_at)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -444,12 +464,12 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
               {product.pricing_model && (
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{pricingConfig[product.pricing_model]?.label || product.pricing_model}</span>
+                  <span className="text-sm">{getPricingConfig(product.pricing_model).label}</span>
                 </div>
               )}
               <div className="flex items-center gap-2">
                 <Activity className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">{statusConfig[product.availability_status]?.label || product.availability_status}</span>
+                <span className="text-sm">{getStatusConfig(product.availability_status).label}</span>
               </div>
               {product.source_count > 0 && (
                 <div className="flex items-center gap-2">
@@ -558,7 +578,7 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
                     <div className="flex items-start gap-3 mb-3">
                       <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center overflow-hidden shrink-0 border border-primary/10">
                         {sp.logo_url ? (
-                          <img src={sp.logo_url} alt={sp.name} className="h-8 w-8 object-cover" />
+                          <Image src={sp.logo_url} alt={sp.name} width={32} height={32} className="object-cover rounded-md" />
                         ) : (
                           <span className="text-lg font-bold text-primary">{sp.name.charAt(0).toUpperCase()}</span>
                         )}
