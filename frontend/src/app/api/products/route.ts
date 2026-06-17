@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase/client';
 
+// Cache for 5 minutes
+const CACHE_MAX_AGE = 300;
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -73,15 +76,22 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
     }
 
-    return NextResponse.json({
-      products: products || [],
-      pagination: {
-        page,
-        limit,
-        total: count || 0,
-        totalPages: Math.ceil((count || 0) / limit),
+    return NextResponse.json(
+      {
+        products: products || [],
+        pagination: {
+          page,
+          limit,
+          total: count || 0,
+          totalPages: Math.ceil((count || 0) / limit),
+        },
       },
-    });
+      {
+        headers: {
+          'Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}, stale-while-revalidate=${CACHE_MAX_AGE * 2}`,
+        },
+      }
+    );
   } catch (error) {
     console.error('Products API error:', error);
     return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
