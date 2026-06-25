@@ -1,0 +1,8 @@
+# Vercel ignore rules
+# Vercel 部署只关心 frontend/ 目录，忽略 Python workflow 避免误扫描
+workflow/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/.venv/
+**/node_modules/

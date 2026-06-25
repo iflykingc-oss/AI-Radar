@@ -67,10 +67,15 @@ Each product is scored on four independent dimensions:
 │   RLS · 5 indexes · updated_at triggers                    │
 └──────────────────────────▲──────────────────────────────────┘
                            │ upsert
-┌──────────────────────────┴──────────────────────────────────┐
+┌──────────────────────────▲──────────────────────────────────┐
 │              Crawler (TypeScript pipeline)                  │
 │  Reddit · HN · Product Hunt · GitHub Trending · RSS         │
 │  dedup → enrich → score → store                             │
+└──────────────────────────▼──────────────────────────────────┐
+│        Workflow (Python · LangGraph 1.0)         [v5.1]     │
+│  natural_query → search → aggregate → analyze → push        │
+│  3 products · daily/weekly · free/pro · Feishu webhook     │
+│  (optional layer; not required for Vercel deployment)       │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -153,10 +158,16 @@ AI-Radar/
 │   │   └── transitions/      # Framer Motion transitions
 │   └── src/lib/              # Supabase client, utilities
 ├── crawler/                  # Data ingestion pipeline
-│   ├── src/sources/          # 4 source connectors
-│   ├── src/pipeline/         # dedup → enrich → score
+│   ├── src/sources/          # 15 source connectors
+│   ├── src/pipeline/         # dedup → enrich → score → classify
 │   └── src/store/            # Supabase writer
+├── workflow/                 # [v5.1] LangGraph 1.0 daily/weekly AI briefing
+│   ├── src/graphs/           # StateGraph + 21 nodes
+│   │   └── nodes/            # fetcher / aggregator / analyzer / pusher
+│   ├── config/               # 6 LLM prompt configs
+│   └── README.md             # Chinese module docs
 ├── supabase/
+
 │   ├── migrations/           # Database schema
 │   ├── seed.sql              # Seed data
 │   └── seed.ts               # Regenerable seed generator
@@ -170,7 +181,7 @@ AI-Radar/
 - [ ] Product embed widget for third-party sites
 - [ ] Public API + webhooks
 - [ ] Mobile-optimized PWA
-- [ ] Daily AI Radar newsletter (auto-generated)
+- [x] Daily AI Radar newsletter (auto-generated)   ← v5.1 (workflow/)
 
 ## Contributing
 

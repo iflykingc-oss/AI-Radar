@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyc
+*.egg-info/
+.venv/
+venv/
+*.egg
+.Python
+env/
+.env
